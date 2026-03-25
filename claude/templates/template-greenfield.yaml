@@ -1,0 +1,112 @@
+schema_version: "1.0.0"
+name: "New Project"
+description: "Greenfield project — setup, core, UI, polish."
+phases:
+  - id: setup
+    name: "Phase 0: Setup"
+    description: "Project bootstrap and infrastructure"
+    tasks:
+      - id: repo-init
+        name: "Repository Init"
+        status: pending
+        prompt: "/start repo-init"
+        acceptance:
+          - "Git repo initialized"
+          - "CI pipeline configured"
+      - id: dev-environment
+        name: "Dev Environment"
+        status: pending
+        depends:
+          - repo-init
+        prompt: "/start dev-environment"
+        acceptance:
+          - "All dependencies installed"
+          - "Dev server starts"
+    gate:
+      name: "Setup Gate"
+      checklist:
+        - "Dev environment runs"
+        - "CI pipeline green"
+      passed: false
+
+  - id: core
+    name: "Phase 1: Core"
+    description: "Core domain logic and data layer"
+    tasks:
+      - id: data-model
+        name: "Data Model"
+        status: pending
+        prompt: "/start data-model"
+        acceptance:
+          - "Schema defined"
+          - "Migrations run"
+      - id: core-logic
+        name: "Core Logic"
+        status: pending
+        depends:
+          - data-model
+        prompt: "/start core-logic"
+        acceptance:
+          - "Unit tests pass"
+          - "Coverage > 80%"
+    gate:
+      name: "Core Gate"
+      checklist:
+        - "All core tests green"
+        - "API endpoints working"
+      passed: false
+
+  - id: ui
+    name: "Phase 2: UI"
+    description: "User interface and frontend"
+    tasks:
+      - id: ui-scaffold
+        name: "UI Scaffold"
+        status: pending
+        prompt: "/start ui-scaffold"
+        acceptance:
+          - "App renders"
+          - "Routing works"
+      - id: ui-features
+        name: "UI Features"
+        status: pending
+        depends:
+          - ui-scaffold
+        prompt: "/start ui-features"
+        acceptance:
+          - "All views implemented"
+          - "Responsive layout"
+    gate:
+      name: "UI Gate"
+      checklist:
+        - "Manual smoke test passes"
+        - "No console errors"
+      passed: false
+
+  - id: polish
+    name: "Phase 3: Polish"
+    description: "Documentation, performance, deployment"
+    tasks:
+      - id: docs
+        name: "Documentation"
+        status: pending
+        prompt: "/start docs"
+        acceptance:
+          - "README complete"
+          - "API docs generated"
+      - id: deploy
+        name: "Deployment"
+        status: pending
+        depends:
+          - docs
+        prompt: "/start deploy"
+        acceptance:
+          - "Deployed to staging"
+          - "Health check passes"
+    gate:
+      name: "Final Gate"
+      checklist:
+        - "All tests green"
+        - "Documentation complete"
+        - "Deployed successfully"
+      passed: false

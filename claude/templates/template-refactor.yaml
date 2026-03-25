@@ -1,0 +1,103 @@
+schema_version: "1.0.0"
+name: "Refactoring Name"
+description: "Large-scale refactoring — analyze, plan, migrate, verify."
+phases:
+  - id: analysis
+    name: "Phase 0: Analysis"
+    description: "Understand current state and identify targets"
+    tasks:
+      - id: code-analysis
+        name: "Code Analysis"
+        status: pending
+        prompt: "/start code-analysis"
+        acceptance:
+          - "Hotspots identified"
+          - "Dependency graph mapped"
+      - id: risk-assessment
+        name: "Risk Assessment"
+        status: pending
+        depends:
+          - code-analysis
+        prompt: "/start risk-assessment"
+        acceptance:
+          - "Breaking changes documented"
+          - "Rollback plan defined"
+    gate:
+      name: "Analysis Gate"
+      checklist:
+        - "Refactoring scope agreed"
+        - "Risk mitigations documented"
+      passed: false
+
+  - id: plan
+    name: "Phase 1: Plan"
+    description: "Design the target architecture"
+    tasks:
+      - id: target-design
+        name: "Target Design"
+        status: pending
+        prompt: "/start target-design"
+        acceptance:
+          - "Target architecture documented"
+          - "Migration steps ordered"
+      - id: test-strategy
+        name: "Test Strategy"
+        status: pending
+        depends:
+          - target-design
+        prompt: "/start test-strategy"
+        acceptance:
+          - "Characterization tests identified"
+          - "Coverage baseline established"
+    gate:
+      name: "Plan Gate"
+      checklist:
+        - "Target design approved"
+        - "Characterization tests written"
+      passed: false
+
+  - id: migrate
+    name: "Phase 2: Migrate"
+    description: "Execute the refactoring"
+    tasks:
+      - id: migration
+        name: "Migration"
+        status: pending
+        prompt: "/start migration"
+        acceptance:
+          - "All tests pass after each step"
+          - "No behavioral changes"
+    gate:
+      name: "Migration Gate"
+      checklist:
+        - "All tests green"
+        - "No regressions"
+      passed: false
+
+  - id: verify
+    name: "Phase 3: Verify"
+    description: "Validate the refactoring"
+    tasks:
+      - id: verification
+        name: "Verification"
+        status: pending
+        prompt: "/start verification"
+        acceptance:
+          - "Performance benchmarks met"
+          - "Code review approved"
+      - id: cleanup
+        name: "Cleanup"
+        status: pending
+        depends:
+          - verification
+        prompt: "/start cleanup"
+        acceptance:
+          - "Dead code removed"
+          - "Documentation updated"
+    gate:
+      name: "Final Gate"
+      checklist:
+        - "All tests green"
+        - "Performance acceptable"
+        - "Documentation complete"
+      passed: false

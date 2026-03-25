@@ -1,0 +1,10 @@
+# Claude Code local state
+.claude/
+claude/project-memory/*
+!claude/project-memory/.gitkeep
+
+# Environment
+.env
+*.pyc
+__pycache__/
+.DS_Store

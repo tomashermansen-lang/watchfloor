@@ -10,7 +10,7 @@ A structured SDLC automation framework for [Claude Code](https://docs.anthropic.
 
 **macOS only.** The security model depends on macOS Seatbelt (kernel-level sandboxing) to enforce filesystem boundaries. There is no Linux or Windows equivalent.
 
-Tested on: macOS 14 Sonoma, macOS 15 Sequoia.
+Tested on: macOS 15 Sequoia.
 
 ## Prerequisites
 

@@ -22,6 +22,8 @@ Tested on: macOS 14 Sonoma, macOS 15 Sequoia.
 | git | 2.30+ | `xcode-select --install` | `git --version` |
 | tmux | 3.0+ | `brew install tmux` | `tmux -V` |
 
+See [REQUIREMENTS.md](REQUIREMENTS.md) for the full list — including per-project tools (ruff, mypy, ESLint, SonarQube, etc.).
+
 ## Quick Start
 
 ```bash

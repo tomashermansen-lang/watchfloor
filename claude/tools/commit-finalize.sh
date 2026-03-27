@@ -261,7 +261,7 @@ if [[ "$HAS_FAILURE" == true ]]; then
   overall_ok=false
 fi
 
-jq -n \
+jq -cn \
   --argjson ok "$overall_ok" \
   --arg task "$TASK" \
   --argjson steps "$steps_json" \

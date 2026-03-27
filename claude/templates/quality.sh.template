@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Quality enforcement — generated from template
+# Each step skips gracefully if tool not installed
+#
+# Usage:
+#   bash quality.sh          # run all checks
+#   bash quality.sh --fix    # run with auto-fix (ruff, eslint)
+#
+# Exit code: 0 = all checks passed, 1 = one or more checks failed
+
+set -euo pipefail
+
+FIX_MODE=false
+[[ "${1:-}" == "--fix" ]] && FIX_MODE=true
+
+# ── Detect Python runner ─────────────────────────────────
+if [[ -f pyproject.toml ]] && command -v uv &>/dev/null; then
+  RUN="uv run"
+elif [[ -d .venv ]] && [[ -x .venv/bin/python ]]; then
+  RUN=".venv/bin/python -m"
+else
+  RUN="python3 -m"
+fi
+
+# ── Detect frontend directory ────────────────────────────
+FRONTEND_DIR=""
+for d in ui ui_react/frontend frontend; do
+  [[ -d "$d" ]] && FRONTEND_DIR="$d" && break
+done
+
+# ── Detect source directory ──────────────────────────────
+SRC_DIR="src"
+[[ -d app ]] && SRC_DIR="app"
+[[ -d backend ]] && SRC_DIR="backend"
+
+ERRORS=0
+
+# ── 1. Ruff lint + format ────────────────────────────────
+if $RUN ruff --version &>/dev/null 2>&1; then
+  echo "=== Ruff ==="
+  if $FIX_MODE; then
+    $RUN ruff check --fix . || ((ERRORS++))
+    $RUN ruff format . || ((ERRORS++))
+  else
+    $RUN ruff check . || ((ERRORS++))
+    $RUN ruff format --check . || ((ERRORS++))
+  fi
+else
+  echo "SKIP: ruff not available"
+fi
+
+# ── 2. mypy ──────────────────────────────────────────────
+if $RUN mypy --version &>/dev/null 2>&1; then
+  echo "=== mypy ==="
+  $RUN mypy "$SRC_DIR/" || ((ERRORS++))
+else
+  echo "SKIP: mypy not available"
+fi
+
+# ── 3. ESLint + TSC ──────────────────────────────────────
+if [[ -n "$FRONTEND_DIR" ]]; then
+  if (cd "$FRONTEND_DIR" && npx eslint --version &>/dev/null 2>&1); then
+    echo "=== ESLint ==="
+    if $FIX_MODE; then
+      (cd "$FRONTEND_DIR" && npx eslint --fix .) || ((ERRORS++))
+    else
+      (cd "$FRONTEND_DIR" && npx eslint .) || ((ERRORS++))
+    fi
+  fi
+  if (cd "$FRONTEND_DIR" && npx tsc --version &>/dev/null 2>&1); then
+    echo "=== TypeScript ==="
+    (cd "$FRONTEND_DIR" && npx tsc --noEmit) || ((ERRORS++))
+  fi
+fi
+
+# ── 4. pytest + coverage ─────────────────────────────────
+if $RUN pytest --co -q &>/dev/null 2>&1; then
+  echo "=== Tests + Coverage ==="
+  $RUN pytest --cov="$SRC_DIR" --cov-report=xml:coverage.xml -q || ((ERRORS++))
+fi
+
+# ── 5. vitest + coverage ─────────────────────────────────
+if [[ -n "$FRONTEND_DIR" ]] && (cd "$FRONTEND_DIR" && npx vitest --version &>/dev/null 2>&1); then
+  echo "=== Vitest + Coverage ==="
+  (cd "$FRONTEND_DIR" && npx vitest run --coverage 2>/dev/null) || ((ERRORS++))
+fi
+
+# ── 6. SonarQube ─────────────────────────────────────────
+if [[ -f sonar-project.properties ]] && command -v sonar-scanner &>/dev/null; then
+  if curl -sf http://localhost:9100/api/system/status | python3 -c "import sys,json; assert json.load(sys.stdin).get('status')=='UP'" 2>/dev/null; then
+    echo "=== SonarQube ==="
+    sonar-scanner || ((ERRORS++))
+  else
+    echo "SKIP: SonarQube not running"
+  fi
+else
+  echo "SKIP: SonarQube not configured or scanner not installed"
+fi
+
+# ── 7. mypy baseline regression ──────────────────────────
+if [[ -f BASELINE_MYPY.md ]] && $RUN mypy --version &>/dev/null 2>&1; then
+  echo "=== mypy Baseline Regression ==="
+  CURRENT=$($RUN mypy "$SRC_DIR/" 2>&1 | grep -c "^.*: error:" || true)
+  BASELINE=$(grep -oP 'error_count: \K\d+' BASELINE_MYPY.md 2>/dev/null || echo 999999)
+  if (( CURRENT > BASELINE )); then
+    echo "REGRESSION: mypy errors increased from $BASELINE to $CURRENT"
+    ((ERRORS++))
+  else
+    echo "OK: mypy errors $CURRENT <= baseline $BASELINE"
+  fi
+fi
+
+# ── Summary ──────────────────────────────────────────────
+echo ""
+if (( ERRORS > 0 )); then
+  echo "FAILED: $ERRORS check(s) failed"
+  exit 1
+else
+  echo "PASSED: all checks clean"
+  exit 0
+fi

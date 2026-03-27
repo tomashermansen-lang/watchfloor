@@ -26,14 +26,22 @@ CRITICAL and WARNING findings must be fixed. SUGGESTION findings are logged.
 
 ## Commit Separation
 
-Three distinct commits, in order:
+### In `/implement` (lint + type checking)
 
-1. `fix(<feature>): static analysis auto-fixes` — ruff format, eslint --fix (safe, mechanical)
-2. `fix(<feature>): resolve static analysis findings` — manual fixes from the fix loop (type errors, SonarQube issues)
-3. `docs(<feature>): static analysis report` — the STATIC_ANALYSIS.md artifact
+Two distinct commits, in order:
 
-Skip any commit where no files changed. Never combine these — clean git
-history lets you revert auto-fixes independently from manual fixes.
+1. `fix(<feature>): lint auto-fixes` — ruff format, eslint --fix (safe, mechanical)
+2. `fix(<feature>): resolve type checker findings` — manual fixes for mypy/tsc errors
+
+### In `/static-analysis` (SonarQube + coverage)
+
+Two distinct commits, in order:
+
+1. `fix(<feature>): resolve static analysis findings` — manual fixes from SonarQube issues
+2. `docs(<feature>): static analysis report` — the STATIC_ANALYSIS.md artifact
+
+Skip any commit where no files changed. Never combine auto-fixes and
+manual fixes — clean git history lets you revert them independently.
 
 ## Tool Runner Detection
 
@@ -54,10 +62,33 @@ TypeScript tools always use `npx` from the project's frontend directory.
 - If SonarQube is not running or scanner not installed, skip gracefully —
   the phase still runs linters and type checkers
 
-## Interaction with QA Phases
+## Coverage Enforcement
 
-- `/static-analysis` owns lint, types, and code smells — fix them here
-- `/qa` and `/team-qa` own behavior, correctness, and coverage — they read
-  STATIC_ANALYSIS.md to avoid re-flagging resolved issues
-- If QA finds a type error or lint issue that static analysis missed, that's
-  a gap in static analysis config — fix the issue AND note it for future runs
+If a project has `BASELINE_MYPY.md`, `/static-analysis` checks for regression:
+- Compare current mypy error count with baseline
+- If errors increased: report as WARNING
+- If errors decreased: update baseline (optional, at user discretion)
+
+If `coverage.xml` exists from a previous run:
+- Compare line coverage percentage
+- Coverage regression: WARNING
+
+## SonarQube New-Code Gate
+
+If `sonar-project.properties` exists, `/static-analysis` checks the new-code
+quality gate after scanner run:
+- `curl -sf http://localhost:9100/api/qualitygates/project_status?projectKey=$KEY`
+- FAILED gate = WARNING minimum
+- Skip gracefully if SonarQube is not running
+
+## Interaction with Implementation and QA Phases
+
+- **Linters and type checkers run in `/implement`** (Step 5). They do NOT
+  run again in `/static-analysis`. This avoids 8-16 minutes of duplicate work
+  per feature.
+- `/static-analysis` owns SonarQube, coverage enforcement, and baseline
+  regression — fix findings from these tools here.
+- `/qa` and `/team-qa` own behavior, correctness, and test coverage — they
+  read STATIC_ANALYSIS.md to avoid re-flagging resolved issues.
+- If QA finds a type error or lint issue that `/implement` missed, that's
+  a gap in the inline lint step — fix the issue AND note it for future runs.

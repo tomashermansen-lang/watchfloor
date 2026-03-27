@@ -12,7 +12,7 @@ set -euo pipefail
 #  --full mode: creates worktree, runs pipeline, commits, merges, cleans up
 #  Default mode: runs pipeline in current worktree, stops after QA
 #
-#  Pipeline (full):  /ba → /plan → /team-review → /implement → /static-analysis → /team-qa → /commit
+#  Pipeline (full):  /ba → /plan → /team-review → /implement → /static-analysis → /manualtest → /team-qa → /commit
 #  Pipeline (light): /ba → /plan → /review → /implement → /static-analysis → /qa → /commit
 #
 #  Each phase runs via claude -p (headless mode) with stream-json output.
@@ -747,7 +747,10 @@ if [[ "$FULL_MODE" == true ]]; then
 
   # Create worktree
   echo -e "${CYAN}Creating worktree for ${TASK}...${NC}"
-  bash scripts/worktree.sh new "$TASK"
+  if ! bash scripts/worktree.sh new "$TASK"; then
+    echo -e "${RED}Error: Failed to create worktree for ${TASK}. Check if it already exists: git worktree list${NC}"
+    exit 1
+  fi
 
   # Determine worktree path from git (avoids case-sensitivity issues on macOS)
   MAIN_DIR=$(pwd)
@@ -780,6 +783,14 @@ else
   fi
   WORKDIR=$(pwd)
   MAIN_DIR=$(git worktree list | head -1 | awk '{print $1}')
+fi
+
+# ── Kill orphaned autopilot processes for this task ──────
+# A previous autopilot run may have left Claude processes writing to the
+# same stream file. Kill them before we truncate.
+if pkill -f "claude.*${TASK}" 2>/dev/null; then
+  sleep 2  # let processes exit cleanly
+  log "${YELLOW}⚠${NC} Killed orphaned Claude processes for task: ${TASK}"
 fi
 
 # ── Initialize ───────────────────────────────────────────

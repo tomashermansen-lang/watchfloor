@@ -43,9 +43,9 @@ Then restart Claude Code and run `/status` to see the pipeline.
 |-------|----------|
 | **Setup** | `/start`, `/start-hotfix` |
 | **Requirements** | `/ba`, `/ux` |
-| **Design** | `/plan`, `/review`, `/team-review` |
-| **Build** | `/implement`, `/hotfix`, `/refactor` |
-| **Quality** | `/static-analysis`, `/manualtest`, `/qa`, `/team-qa`, `/grill` |
+| **Design** | `/plan`, `/team-review`, `/review` |
+| **Build** | `/implement` (incl. inline lint + type checking), `/hotfix`, `/refactor` |
+| **Quality** | `/static-analysis` (SonarQube + coverage), `/manualtest`, `/team-qa`, `/qa`, `/grill` |
 | **Release** | `/commit`, `/done`, `/rollout` |
 | **Planning** | `/plan-project`, `/idea`, `/productmanager` |
 | **Utility** | `/status`, `/health`, `/docs`, `/recover`, `/optimize`, `/cleaner`, `/critic`, `/sync`, `/checkpoint`, `/refreshclaude`, `/commit-readme`, `/help` |
@@ -82,8 +82,11 @@ Then restart Claude Code and run `/status` to see the pipeline.
 
 **Flow mode** — standard development with worktree isolation and human checkpoints:
 ```
-/start → /ba flow → /plan flow → /implement flow → /qa flow → /done
+Full (team):  /start → /ba → /plan → /team-review → /implement → /static-analysis → /manualtest → /team-qa → /commit → /done
+Light (solo): /start → /ba → /plan → /review → /implement → /static-analysis → /qa → /commit → /done
 ```
+
+In the full pipeline, `/team-review` and `/team-qa` use multi-agent teams (4-5 specialists each) with cross-reviewer discussion and fix loops. The light pipeline uses solo `/review` with integrated test verification. `/implement` runs linters and type checkers inline; `/static-analysis` focuses on SonarQube and coverage enforcement.
 
 **Standalone** — quick one-off without worktree:
 ```
@@ -92,7 +95,9 @@ Then restart Claude Code and run `/status` to see the pipeline.
 
 **Autopilot** — fully autonomous via tmux, no human required:
 ```bash
-bash ~/.claude/tools/autopilot.sh my-feature
+bash ~/.claude/tools/autopilot.sh my-feature              # auto-detects pipeline
+bash ~/.claude/tools/autopilot.sh --pipeline full my-feature   # force team pipeline
+bash ~/.claude/tools/autopilot.sh --pipeline light my-feature  # force solo pipeline
 ```
 
 ## Security Model

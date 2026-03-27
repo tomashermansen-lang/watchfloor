@@ -64,6 +64,26 @@ Validate at **system boundaries only** (not internal calls):
 - Missing rate limiting → WARNING
 - Missing security headers → WARNING
 
+## Trust Boundary Awareness
+
+Before flagging config file values as injection risks, check:
+
+1. **Is the file within the project's trust boundary** (`$PROJECTS_ROOT`)?
+2. **Is the file gitignored** (credentials) **or tracked** (config)?
+3. Tracked config files within the trust boundary are **NOT injection
+   vectors** — they are developer-controlled. Do not flag:
+   - YAML/JSON config values as "unsanitized input"
+   - `sonar-project.properties` tokens
+   - `settings.yaml` values used in string formatting
+   - `.env` files loaded via dotenv (within trust boundary)
+4. **Only flag config-sourced values as security issues** if they cross
+   a system boundary (e.g., config value used in SQL query, shell
+   command, or HTTP header without sanitization).
+
+This distinction is critical — empirical analysis of 11 features showed the
+security reviewer spending 25-30% of discussion time on config-file findings
+that were consistently dismissed because they were within the trust boundary.
+
 ## Gotchas
 
 - **OWASP table is noise.** Claude already knows OWASP Top 10 cold. The

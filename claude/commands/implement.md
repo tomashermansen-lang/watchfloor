@@ -124,7 +124,70 @@ Before presenting checkpoint, verify:
 
 **Show the COMPLETE checklist to the user with pass/fail status for each item.**
 
-## Step 5: Start App (flow mode)
+## Step 5: Inline Lint + Type Checking
+
+After all components pass TDD and the completion checklist is green, run
+linters and type checkers inline — don't defer to `/static-analysis`.
+
+### 5.1: Auto-Fix (lint + format)
+
+Detect the Python runner per static-analysis-conventions.md § Tool Runner Detection.
+
+```bash
+# Python (if ruff available)
+$RUN ruff check --fix .
+$RUN ruff format .
+
+# TypeScript (if TS files changed on this branch)
+cd <frontend-dir> && npx eslint --fix .
+```
+
+If any files were modified by auto-fix:
+```bash
+git add -u
+git commit -m "fix(<feature>): lint auto-fixes"
+```
+Skip the commit if no files changed.
+
+### 5.2: Type Checking
+
+```bash
+# Python
+$RUN mypy src/ --no-error-summary 2>&1 || true
+
+# TypeScript (if TS project)
+cd <frontend-dir> && npx tsc --noEmit 2>&1 || true
+```
+
+### 5.3: Fix Type Errors
+
+Fix all type errors in files changed on this branch (`git diff main --name-only`).
+Pre-existing errors in untouched files are logged but not fixed.
+
+**Loop guard:** Maximum 3 fix passes. After each pass:
+```
+Type check pass <N>/3: <CLEAN | NEEDS FIX>
+  Fixed: <count>  |  Remaining: <count>
+```
+
+After fixing, re-run ALL tests to ensure fixes didn't break anything.
+
+If type errors were fixed, commit:
+```bash
+git add -u
+git commit -m "fix(<feature>): resolve type checker findings"
+```
+Skip if no files changed. Never combine auto-fixes and type fixes into one commit.
+
+### 5.4: Skip Conditions
+
+- If ruff/eslint is not available: skip with a warning, don't fail
+- If mypy/tsc is not available: skip with a warning, don't fail
+- If zero linters AND zero type checkers ran: log a warning in the checkpoint
+  summary but don't block — the `/static-analysis` phase will catch this via
+  its tool coverage gate
+
+## Step 6: Start App (flow mode)
 
 ```bash
 ./ui_react/start.sh
@@ -136,7 +199,7 @@ Tell user:
 - Press `Ctrl+C` to stop
 - Ready for manual testing
 
-## Step 6: Flow Checkpoint
+## Step 7: Flow Checkpoint
 
 Present using the Checkpoint Contract from the flow-mode skill:
 

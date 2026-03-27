@@ -138,7 +138,10 @@ injected at spawn time.
 - Task: Review implementation for OWASP Top 10 vectors. Check for command
   injection, XSS, SQL injection, eval/innerHTML usage, hardcoded secrets, path
   traversal. Verify security tests exist for each attack vector relevant to
-  the feature. Check input validation at system boundaries.
+  the feature. Check input validation at system boundaries. Check the Trust
+  Boundary Awareness section in the security-checklist skill before flagging
+  config values — tracked config files within $PROJECTS_ROOT are not injection
+  vectors.
 - Categories: `SECURITY`
 
 **Performance Reviewer** — `subagent_type: performance-engineer`

@@ -1,12 +1,13 @@
 ---
-description: Static Analysis — run linters, type checkers, and SonarQube, then report findings
+description: Static Analysis — run SonarQube, coverage enforcement, and baseline regression checks
 argument-hint: <feature-name> OR flow <feature-name>
 ---
 
 # Static Analysis: $ARGUMENTS
 
-Run fast linters with auto-fix, type checkers, and SonarQube static analysis.
-Produce a findings report and gate on blockers.
+Run SonarQube code analysis, coverage enforcement, and baseline regression
+checks. Linters and type checkers already ran in `/implement` (Step 5) —
+this phase focuses on deeper static analysis that requires external tooling.
 
 ## Flow Mode
 
@@ -63,82 +64,46 @@ Classify:
   `eslint.config.*`, or `.eslintrc.*`)
 - **Both**: both types changed
 
-Also check if `ui/` or `ui_react/` was modified (determines whether to run
-frontend linters).
+Detect the Python runner per static-analysis-conventions.md § Tool Runner Detection.
 
-## Step 2: Fast Linters with Auto-Fix
+## Step 2: Coverage Enforcement
 
-Run linters appropriate to the detected project type. Auto-fix what can be
-auto-fixed.
+Generate coverage data for SonarQube and baseline comparison.
 
-### Python
+### 2.1: Python Coverage
 
-Detect the runner: if `pyproject.toml` exists and the project uses `uv`, prefix
-commands with `uv run`. Otherwise use bare commands.
+Check if `pytest-cov` is available (look for it in `pyproject.toml` dependencies):
 
 ```bash
-# Detect runner
-if [[ -f pyproject.toml ]] && command -v uv &>/dev/null; then
-  RUN="uv run"
-else
-  RUN=""
-fi
-
-# Lint + auto-fix
-$RUN ruff check --fix .
-
-# Format
-$RUN ruff format .
+$RUN pytest --cov=src --cov-report=xml:coverage.xml -q 2>&1 || true
 ```
 
-If `ruff` is not available (neither globally nor via uv), skip with a warning.
+If `pytest-cov` is not installed, skip with a warning.
 
-### TypeScript (only if TS files changed)
+### 2.2: TypeScript Coverage
+
+If frontend directory exists and vitest is configured:
 
 ```bash
-cd ui/  # or ui_react/frontend/ — use the project's frontend directory
-npx eslint --fix .
+cd <frontend-dir> && npx vitest run --coverage 2>/dev/null || true
 ```
 
-If `eslint` is not configured, skip with a warning.
+### 2.3: mypy Baseline Regression
 
-### Commit Auto-Fixes
-
-If any files were modified by auto-fix:
+If `BASELINE_MYPY.md` exists:
 
 ```bash
-git add -u
-git commit -m "fix(<feature>): static analysis auto-fixes"
+CURRENT=$($RUN mypy src/ 2>&1 | grep -c "^.*: error:" || true)
+BASELINE=$(grep -oP 'error_count: \K\d+' BASELINE_MYPY.md 2>/dev/null || echo 999999)
 ```
 
-If no files changed, skip the commit.
+If `CURRENT > BASELINE`: report as WARNING — mypy error count has regressed.
+If `CURRENT <= BASELINE`: log as OK.
+If `BASELINE_MYPY.md` does not exist: skip silently.
 
-## Step 3: Type Checking
+## Step 3: SonarQube Scan
 
-Run type checkers and collect findings.
-
-### Python
-
-Use the same runner detected in Step 2:
-
-```bash
-$RUN mypy src/ --no-error-summary 2>&1 || true
-```
-
-Use the project's mypy config if present (`mypy.ini`, `pyproject.toml [tool.mypy]`).
-
-### TypeScript
-
-```bash
-cd ui/  # or the project's frontend directory
-npx tsc --noEmit 2>&1 || true
-```
-
-Collect all findings for the fix loop (Step 5).
-
-## Step 4: SonarQube Scan
-
-### 4.1: Pre-flight
+### 3.1: Pre-flight
 
 Verify SonarQube is reachable:
 
@@ -148,9 +113,9 @@ curl -sf http://localhost:9100/api/system/status | python3 -c "import sys,json; 
 
 If not `UP`:
 - Print: "SonarQube is not running. Start it: `start-system sonarqube`"
-- **Skip SonarQube steps.** Continue with linter/type-check findings only.
+- **Skip SonarQube steps.** Continue with coverage findings only.
 
-### 4.2: Ensure Project Exists
+### 3.2: Ensure Project Exists
 
 **Authentication:** `$SONAR_TOKEN` is pre-configured as an env var. Use it
 for all API calls via `-H "Authorization: Bearer $SONAR_TOKEN"`. Do NOT
@@ -160,24 +125,22 @@ Check if the project key exists in SonarQube. The project key convention is
 the directory name (e.g., `OIH`, `eulex-single-law-retrieval-artikel99`,
 `claude-agent-dashboard`). Read it from `sonar-project.properties` if present.
 
+Use the quality gate API to verify the project exists (works with analysis
+tokens that lack Browse permission on `/api/projects/search`):
+
 ```bash
 curl -sf -H "Authorization: Bearer $SONAR_TOKEN" \
-  "http://localhost:9100/api/projects/search?q=<project-key>" | python3 -c "
+  "http://localhost:9100/api/qualitygates/project_status?projectKey=<project-key>" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
-components = data.get('components', [])
-print('EXISTS' if any(c['key'] == '<project-key>' for c in components) else 'NOT_FOUND')
+print('EXISTS' if 'projectStatus' in data else 'NOT_FOUND')
 "
 ```
 
-If `NOT_FOUND`, create it:
-```bash
-curl -sf -X POST -H "Authorization: Bearer $SONAR_TOKEN" \
-  "http://localhost:9100/api/projects/create" \
-  -d "name=<project-key>&project=<project-key>"
-```
+If `NOT_FOUND` (HTTP 404), the project doesn't exist yet. Run `sonar-scanner`
+first — it auto-creates the project on first scan.
 
-### 4.3: Run Scanner
+### 3.3: Run Scanner
 
 Verify `sonar-scanner` is available:
 ```bash
@@ -186,9 +149,7 @@ command -v sonar-scanner || echo "NOT_FOUND"
 
 If not found:
 - Print: "sonar-scanner not installed. Install: `brew install sonar-scanner`"
-- **Skip SonarQube steps.** Continue with linter/type-check findings only.
-
-### 4.3.1: Run the scan
+- **Skip SonarQube steps.** Continue with coverage findings only.
 
 If `sonar-project.properties` exists, `sonar-scanner` reads it automatically
 — do NOT pass `-D` flags that it already defines. The token is read from
@@ -197,8 +158,6 @@ If `sonar-project.properties` exists, `sonar-scanner` reads it automatically
 ```bash
 sonar-scanner
 ```
-
-That's it. No extra flags needed when `sonar-project.properties` is present.
 
 If `sonar-project.properties` does NOT exist, pass explicit flags:
 ```bash
@@ -212,14 +171,13 @@ sonar-scanner \
 
 Wait for the scan to complete (check task status):
 ```bash
-# Get the task ID from scanner output, then poll
 curl -sf -H "Authorization: Bearer $SONAR_TOKEN" "http://localhost:9100/api/ce/activity?component=<project-key>&ps=1" | \
   python3 -c "import sys,json; t=json.load(sys.stdin)['tasks'][0]; print(t['status'])"
 ```
 
 Poll every 5s until status is `SUCCESS` or `FAILED` (max 2 minutes).
 
-### 4.4: Fetch Results
+### 3.4: Fetch Results
 
 Fetch quality gate status:
 ```bash
@@ -233,6 +191,24 @@ for cond in data['projectStatus'].get('conditions', []):
     print(f'  {cond[\"metricKey\"]}: {cond[\"actualValue\"]} (threshold: {cond[\"errorThreshold\"]})')
 "
 ```
+
+### 3.5: New-Code Quality Gate
+
+Check the new-code quality gate specifically:
+```bash
+curl -sf -H "Authorization: Bearer $SONAR_TOKEN" \
+  "http://localhost:9100/api/qualitygates/project_status?projectKey=<project-key>" | \
+  python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+status = data['projectStatus']['status']
+print(f'New-Code Quality Gate: {status}')
+sys.exit(0 if status == 'OK' else 1)
+"
+```
+
+If new-code gate is FAILED: report as WARNING minimum. This must be fixed
+before the phase can pass.
 
 Fetch issues (bugs, vulnerabilities, code smells):
 ```bash
@@ -250,29 +226,12 @@ for issue in data.get('issues', []):
 "
 ```
 
-## Step 4.5: Tool Coverage Gate
+## Step 4: Fix Loop
 
-Count how many tool categories executed (not skipped):
-- **Linters:** ruff OR eslint (at least one ran)
-- **Type checkers:** mypy OR tsc (at least one ran)
-- **Code analysis:** SonarQube (optional, warn-only)
+All findings from Steps 2–3 must be resolved before proceeding. This phase
+owns SonarQube and coverage findings end-to-end.
 
-If zero linters AND zero type checkers ran:
-- **FAIL the phase.** Print: "Static analysis environment incomplete —
-  no linters or type checkers available. Fix the environment before
-  proceeding. Check the project's `pipeline.toolchain` manifest in CLAUDE.md."
-- Do NOT continue to the fix loop or report.
-
-If at least one category ran but others were skipped, log a warning but
-proceed. Include tool coverage status in the report header.
-
-## Step 5: Fix Loop
-
-All findings from Steps 3–4 must be resolved before proceeding. This phase
-owns its findings end-to-end — detect, fix, verify. QA should receive a
-clean codebase.
-
-### 5.1: Compile All Findings
+### 4.1: Compile All Findings
 
 Merge findings from all sources into a single list:
 
@@ -283,10 +242,11 @@ Merge findings from all sources into a single list:
 - SonarQube BLOCKER/CRITICAL → CRITICAL
 - SonarQube MAJOR → WARNING
 - SonarQube MINOR/INFO → SUGGESTION
-- mypy errors → WARNING
-- tsc errors → WARNING
+- mypy baseline regression → WARNING
+- Coverage regression → WARNING
+- New-code quality gate FAILED → WARNING
 
-### 5.2: Fix CRITICAL and WARNING Findings
+### 4.2: Fix CRITICAL and WARNING Findings
 
 Fix all CRITICAL and WARNING findings. For each finding:
 1. Read the file and understand the issue in context
@@ -297,34 +257,20 @@ Fix all CRITICAL and WARNING findings. For each finding:
 (`git diff main --name-only`). Pre-existing issues in untouched files are
 logged but not fixed.
 
-### 5.3: Re-Verify
+### 4.3: Re-Verify
 
-After fixing, re-run all checks:
+After fixing, re-run coverage and re-scan SonarQube:
 
 ```bash
-# Type checkers
-$RUN mypy src/ --no-error-summary 2>&1 || true
-npx tsc --noEmit 2>&1 || true  # if TS project
-
-# Generate coverage data before re-scanning SonarQube
-# Python projects
+# Regenerate coverage
 $RUN pytest --cov=src --cov-report=xml:coverage.xml -q 2>&1 || true
-
-# Node projects (if applicable)
-cd ui_react/frontend/ && npx vitest run --coverage 2>/dev/null || true && cd -
 
 # Re-scan SonarQube (if it was available)
 sonar-scanner  # uses sonar-project.properties
-# Wait for scan, re-fetch results (same as Step 4.3–4.4)
+# Wait for scan, re-fetch results (same as Step 3.3–3.4)
 ```
 
-This ensures `sonar.python.coverage.reportPaths=coverage.xml` (or equivalent)
-has data to report. Without this, SonarQube coverage gate auto-fails at 0%.
-
-Also run the project's test suite to ensure fixes didn't break anything:
-```bash
-# Use the project's test command from CLAUDE.md
-```
+Also run the project's test suite to ensure fixes didn't break anything.
 
 ### Test Failure Classification
 
@@ -335,21 +281,8 @@ After running the test suite, classify any failures:
 2. **Environment gap** — test fails on both main and this branch due to
    missing dependency, sandbox restriction, or network block (e.g., socksio
    import error from proxy, tiktoken download blocked). **Do NOT spend turns
-   debugging or retrying network failures.** If a test fails because a package
-   tries to download data from a blocked host, classify it immediately and
-   move on. One turn max per environment gap. Log to
-   `docs/ENV_ISSUES.md` (create if missing):
-
-   ```markdown
-   # Environment Issues
-
-   Issues caused by the execution environment, not code. Fix these to
-   unblock the full test suite.
-
-   | Date | Test File | Failure | Root Cause | Fix |
-   |------|-----------|---------|------------|-----|
-   ```
-
+   debugging or retrying network failures.** One turn max per environment gap.
+   Log to `docs/ENV_ISSUES.md` (create if missing).
 3. **Pre-existing code issue** — test fails on main due to a code bug in
    an untouched file. Log as out-of-scope (existing rule).
 
@@ -357,10 +290,8 @@ To verify classification, run the failing test on main:
 ```bash
 git stash && $RUN pytest <failing_test> -x 2>&1; git stash pop
 ```
-If it fails on main too → environment gap or pre-existing. If it passes on
-main → code regression (fix immediately).
 
-### 5.4: Loop Guard
+### 4.4: Loop Guard
 
 **Maximum 3 fix passes.** After each pass, print:
 ```
@@ -372,30 +303,19 @@ Static Analysis, Pass <N>/3: <CLEAN | NEEDS FIX>
 If findings remain after 3 passes, proceed to report with remaining issues
 listed. Present to user at checkpoint — don't block the pipeline indefinitely.
 
-### 5.5: Commit Fixes — Separate Commits
+### 4.5: Commit Fixes
 
-Commits must be separate for clean git history (auto-fixes are safe to
-revert independently from manual fixes).
+If any source files were modified during the fix loop:
 
-1. **Auto-fix commit** (from Step 2, if not already committed):
-   ```bash
-   git diff --cached --stat  # verify staged changes exist
-   git commit -m "fix(<feature>): static analysis auto-fixes"
-   ```
+```bash
+git add -u
+git diff --cached --stat  # verify staged changes exist
+git commit -m "fix(<feature>): resolve static analysis findings"
+```
 
-2. **Manual fix commit** (from Step 5 fix loop):
-   ```bash
-   git add -u
-   git diff --cached --stat  # verify staged changes exist
-   git commit -m "fix(<feature>): resolve static analysis findings"
-   ```
+Skip the commit if no files changed.
 
-3. **Report commit** happens in Step 6/7 (existing).
-
-**Guard:** Before each commit, check `git diff --cached --stat`. If empty,
-skip that commit. Never combine auto-fixes and manual fixes into one commit.
-
-## Step 6: Write Report
+## Step 5: Write Report
 
 Write `docs/INPROGRESS_Feature_<feature>/STATIC_ANALYSIS.md`:
 
@@ -408,31 +328,23 @@ Write `docs/INPROGRESS_Feature_<feature>/STATIC_ANALYSIS.md`:
 
 | Check | Status | Initial Findings | Fixed | Remaining |
 |-------|--------|-----------------|-------|-----------|
-| Ruff (lint + format) | PASS/SKIP | <count> | <count> auto-fixed | 0 |
-| ESLint | PASS/SKIP | <count> | <count> auto-fixed | 0 |
-| mypy | PASS/SKIP | <count> | <count> | <count> |
-| TypeScript (tsc) | PASS/SKIP | <count> | <count> | <count> |
+| Coverage (pytest-cov) | PASS/SKIP | — | — | — |
+| Coverage (vitest) | PASS/SKIP | — | — | — |
+| mypy baseline regression | PASS/SKIP/REGRESSION | <baseline> → <current> | — | — |
 | SonarQube | PASSED/FAILED/SKIPPED | <count> | <count> | <count> |
+| New-code quality gate | PASSED/FAILED/SKIPPED | — | — | — |
 
-## Auto-Fixes Applied (Step 2)
+## Coverage Results
 
-<list of files modified by ruff/eslint auto-fix, or "None">
+### Python
+<coverage summary from coverage.xml, or "pytest-cov not available">
 
-Commit: `fix(<feature>): static analysis auto-fixes`
+### TypeScript
+<coverage summary, or "vitest coverage not configured">
 
-## Fix Loop (Step 5)
+## mypy Baseline
 
-### Findings Resolved
-| # | Source | File | Line | Issue | Fix Applied |
-|---|--------|------|------|-------|-------------|
-
-### Findings Remaining (if any)
-| # | Source | Severity | File | Line | Issue | Reason |
-|---|--------|----------|------|------|-------|--------|
-
-(Reason: out-of-scope file, 3-pass limit reached, etc.)
-
-Commit: `fix(<feature>): resolve static analysis findings`
+<Current: N errors | Baseline: M errors | Status: OK/REGRESSION>
 
 ## SonarQube Results
 
@@ -441,11 +353,23 @@ Commit: `fix(<feature>): resolve static analysis findings`
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
 
+### New-Code Quality Gate: <PASSED/FAILED/SKIPPED>
+
 ### Issues (post-fix)
 | # | Severity | Type | File | Line | Message |
 |---|----------|------|------|------|---------|
 
 (If SonarQube was skipped, note why.)
+
+## Fix Loop
+
+### Findings Resolved
+| # | Source | File | Line | Issue | Fix Applied |
+|---|--------|------|------|-------|-------------|
+
+### Findings Remaining (if any)
+| # | Source | Severity | File | Line | Issue | Reason |
+|---|--------|----------|------|------|-------|--------|
 
 ## Test Results
 
@@ -458,14 +382,14 @@ or <PASSED WITH NOTES — N low-severity items remaining in untouched files>
 or <FAILED — N findings could not be resolved after 3 passes>
 ```
 
-## Step 7: Flow Checkpoint
+## Step 6: Flow Checkpoint
 
 Present using the Checkpoint Contract from the flow-mode skill:
 
 ```
 Static analysis complete: <PASSED or FAILED>
 
-<Summary — auto-fixes applied, type checker findings, SonarQube gate status>
+<Summary — coverage status, SonarQube gate status, baseline regression>
 
 Files written: docs/INPROGRESS_Feature_<feature>/STATIC_ANALYSIS.md
 Branch: <branch>
@@ -493,21 +417,20 @@ If verdict is FAILED (unresolved findings after 3 passes), do NOT auto-approve
 
 ## Rules
 
-- **FIX EVERYTHING.** This phase owns its findings. Detect, fix, verify. Don't
-  pass unfixed findings to QA — QA validates behavior, not lint.
-- **THREE COMMITS MAX.** (1) Auto-fixes from ruff/eslint `--fix` (Step 2),
-  (2) Manual fixes from the fix loop (Step 5), (3) Report (Step 6). Keep them
-  separate for clean git history.
+- **FIX EVERYTHING.** This phase owns SonarQube and coverage findings. Detect,
+  fix, verify. Don't pass unfixed findings to QA.
+- **LINTERS AND TYPE CHECKERS RAN IN /IMPLEMENT.** Do not re-run ruff, eslint,
+  mypy, or tsc here. If you suspect they missed something, note it in the report
+  but do not duplicate the work.
 - **SCOPE TO BRANCH.** Only fix findings in files changed on this branch.
   Pre-existing issues in untouched files are logged as out-of-scope.
 - **RUN TESTS.** After every fix pass, run the project's test suite. Fixes
   that break tests are reverted.
 - **3-PASS HARD CAP.** Maximum 3 fix passes. If findings persist, report them
   and let the human decide — don't loop forever.
-- **SKIP INDIVIDUAL TOOLS GRACEFULLY** but enforce minimum coverage. If a specific
-  tool is missing (ruff, eslint, sonar-scanner), skip that tool with a warning.
-  However, Step 4.5 requires at least one linter AND one type checker to run —
-  if the environment can't provide that minimum, the phase fails.
+- **SKIP GRACEFULLY.** If SonarQube is not running or scanner not installed,
+  skip SonarQube with a warning. If coverage tooling is not installed, skip
+  coverage with a warning. The phase still produces a report either way.
 - **EVIDENCE IN THIS MESSAGE.** Show actual output from each tool. Banned:
   "should pass", "probably clean", "seems fine".
 - **NO DEFERRING.** Never mark findings as "will fix in QA phase". Fix them

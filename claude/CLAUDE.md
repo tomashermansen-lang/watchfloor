@@ -8,11 +8,17 @@ Three-tier execution model for all projects:
 2. **Development** (`/start` → `/ba` → `/ux` → `/plan` → `/implement` → `/static-analysis` → `/qa` → `/done`) — worktree-isolated workflow with phase commits and human checkpoints
 3. **Autonomy** (`autopilot.sh`) — fully hands-off tmux pipeline for autopilot-eligible tasks
 
-**Full pipeline:**
+**Pipelines:**
 ```
-/start → /ba flow → /ux flow → /plan flow → /team-review flow → /review flow
-→ /implement flow → /static-analysis flow → /manualtest flow → /team-qa flow → /qa flow → /commit flow → /done
+Full (team):  /start → /ba → /plan → /team-review → /implement (inkl. lint+types) → /static-analysis (SonarQube+coverage) → /manualtest → /team-qa → /commit → /done
+Light (solo): /start → /ba → /plan → /review → /implement (inkl. lint+types) → /static-analysis (SonarQube+coverage) → /qa → /commit → /done
 ```
+
+Key design decisions (based on empirical analysis of 11 features, 13.8h total):
+- `/implement` runs linters and type checkers inline — `/static-analysis` only runs SonarQube + coverage
+- Light pipeline keeps solo `/qa` after implementation — review checks the plan, QA checks the code
+- Full pipeline has no solo `/review` — `/team-review` includes deep dive phase
+- Team phases (team-review, team-qa) are the highest-value review phases — they find architectural/feasibility bugs that solo cannot
 
 **When to use which mode:**
 - **Flow mode** (`/command flow <feature>`): Standard — worktree isolation, phase commits, audit trail
@@ -25,18 +31,16 @@ All local dev servers use reserved ports to avoid conflicts.
 Start everything: `start-system` (or `~/start-system.sh`).
 
 Configure project paths via env vars or `~/.claude/project-dirs.conf`.
-Default projects root: `$PROJECTS_ROOT` (defaults to `~/Projects`).
+Default projects root: `$PROJECTS_ROOT` (defaults to `~/Projekter`).
 
 | Project | Backend | Frontend | Notes |
 |---------|---------|----------|-------|
 | Claude Dashboard | 8787 | 5175 | `$PROJECTS_ROOT/claude-agent-dashboard/` |
-| Your Project A | 8100 | 5174 | Configure in `project-dirs.conf` |
-| Your Project B | 8200 | 5173 | Configure in `project-dirs.conf` |
-| SonarQube | 9100 | — | Optional — static analysis server |
+| OIH | 8100 | 5174 | `$PROJECTS_ROOT/OIH/` — also Postgres 5432/5433, Langfuse 3000 |
+| Eulex RAG | 8200 | 5173 | `$PROJECTS_ROOT/eulex-single-law-retrieval-artikel99/` |
+| SonarQube | 9100 | — | `$PROJECTS_ROOT/sonarqube/` — static analysis |
 
-Commands: `start-system {all|dashboard|stop}`
-
-Customize `start-system.sh` for your own projects — it's designed to be extended.
+Commands: `start-system {all|dashboard|oih|eulex|sonarqube|stop}`
 
 ## Dotfiles Repo
 
@@ -46,7 +50,7 @@ Validate sync: `bash sync.sh diff`
 
 ## Security Model
 
-**Trust boundary:** `$PROJECTS_ROOT` (default `~/Projects/`) — all projects live
+**Trust boundary:** `$PROJECTS_ROOT` (default `~/Projekter/`) — all projects live
 here. The macOS Seatbelt sandbox enforces this at the kernel level.
 
 **Three layers:**

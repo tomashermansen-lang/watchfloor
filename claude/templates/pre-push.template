@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Pre-push hook — type checking gate
+# Install: cp this to .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+#
+# Runs mypy on the source directory before allowing a push.
+# Skips gracefully if mypy is not installed.
+
+set -euo pipefail
+
+# Detect Python runner (per static-analysis-conventions.md)
+if [[ -f pyproject.toml ]] && command -v uv &>/dev/null; then
+  RUN="uv run"
+elif [[ -d .venv ]] && [[ -x .venv/bin/python ]]; then
+  RUN=".venv/bin/python -m"
+else
+  RUN="python3 -m"
+fi
+
+# Detect source directory
+SRC_DIR="src"
+[[ -d app ]] && SRC_DIR="app"
+[[ -d backend ]] && SRC_DIR="backend"
+
+# mypy (skip if not installed)
+if $RUN mypy --version &>/dev/null 2>&1; then
+  echo "Pre-push: running mypy on $SRC_DIR/..."
+  $RUN mypy "$SRC_DIR/" || {
+    echo ""
+    echo "mypy failed — fix type errors before pushing"
+    exit 1
+  }
+  echo "Pre-push: mypy passed"
+fi

@@ -133,7 +133,8 @@ injected at spawn time.
 **Architect Reviewer** — `subagent_type: architect`
 - Task: Verify SOLID compliance, agentic navigability, dependency direction,
   module boundaries, security rules. Use the solid-principles
-  and agentic-code checklists.
+  and agentic-code checklists. Check the Trust Boundary Awareness section
+  in the security-checklist skill before flagging config values.
 - Categories: `SOLID`, `AGENTIC`, `SECURITY`
 
 **Lead Dev Reviewer** — `subagent_type: lead-developer`

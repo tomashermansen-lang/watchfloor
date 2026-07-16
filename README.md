@@ -64,7 +64,7 @@ Plans are `execution-plan.yaml` files validated against schema 2.0 (a knowledge-
 
 Every phase can run on a different model. The default routes reasoning phases (ba, plan, testplan, review, implement, qa) to Sonnet and mechanical phases (static-analysis, commit) to Haiku — a combination that measured **56% cheaper than the all-Opus baseline** ($16.78 vs $38.01 on the same feature) in an A/B canary run, at equal quality gates.
 
-An opt-in harness can also route selected phases through a local Ollama daemon. The review and qa phases are denylisted from local routing by design: the phases that judge the work always run on the strongest models.
+An opt-in harness can also route selected phases through a local Ollama daemon; so far real runs have not succeeded (endpoint compatibility against the agent harness, plus local hardware limits), so it remains an experiment rather than a working configuration. The review and qa phases are denylisted from local routing by design: the phases that judge the work always run on the strongest models.
 
 ## Supervision (the watch floor)
 

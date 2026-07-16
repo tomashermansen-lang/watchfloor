@@ -1,0 +1,10 @@
+{
+  "slug": "api-grinder",
+  "method": "GET",
+  "path": "/api/grinder",
+  "query": "",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "[]"
+}

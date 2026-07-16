@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manifest.schema.json",
+  "$comment": "Defines the pipeline.grinder block structure. Unknown top-level keys pass validation (additionalProperties: true). New sub-blocks should define their own $defs entry.",
+  "type": "object",
+  "required": ["languages"],
+  "additionalProperties": true,
+  "properties": {
+    "languages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["bash", "python", "typescript", "go", "rust", "java", "ruby"]
+      }
+    },
+    "coverage": {
+      "$ref": "#/$defs/coverage"
+    },
+    "findings": {
+      "$ref": "#/$defs/findings"
+    },
+    "dependencies": {
+      "$ref": "#/$defs/dependencies"
+    }
+  },
+  "$defs": {
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "target_project_wide": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.85
+        },
+        "target_per_commit": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.99
+        },
+        "exclude_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "exclude_patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sonarqube": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string" },
+            "project_key": { "type": "string" },
+            "min_severity": {
+              "type": "string",
+              "enum": ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "INFO"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "bandit": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "paths": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "semgrep": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "config": { "type": "string" },
+            "paths": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "shellcheck": {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "ruff": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "eslint": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "mypy": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "tsc": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "fix_rules_allowlist": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "never_touch_files": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "severity_gate": {
+          "type": "string",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+          "default": "HIGH"
+        },
+        "suggest_only_gate": {
+          "type": "string",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+          "default": "MEDIUM"
+        },
+        "never_auto_upgrade": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "semver_range"],
+            "properties": {
+              "name": { "type": "string" },
+              "semver_range": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "exclude_deps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason"],
+            "properties": {
+              "name": { "type": "string" },
+              "reason": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  }
+}

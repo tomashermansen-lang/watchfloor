@@ -1,0 +1,53 @@
+schema_version: 2.0.0
+name: malicious-gate-cmd-fixture
+vision: Fixture with a hostile shell expression in gate.checklist[].cmd; bash -n parses without executing the substitution.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: bash -n exits 0 without side-effects on substitution
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - bash
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Trust-boundary regression guard.
+    sequencing_rationale: Validator must parse gate.checklist[].cmd without executing it; this fixture proves the side-effect-free path.
+    gate:
+      name: foundation gate
+      passed: false
+      checklist:
+        - item: malicious gate cmd
+          check:
+            kind: shell
+            cmd: "$(touch /tmp/pwned-by-validator)"
+            expected_runtime_seconds: 1
+    tasks:
+      - id: t1
+        name: T1
+        task_type: development
+        status: pending
+        what: Fixture for trust-boundary verification — hostile cmd substitution must not execute during bash -n syntax validation.
+        why: Defense-in-depth across operator-authored YAML; validator never executes a cmd, only checks syntax via bash -n -c with shell false.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When validate-plan.py runs against this fixture, /tmp/pwned-by-validator shall not be created.
+        prompt: t1

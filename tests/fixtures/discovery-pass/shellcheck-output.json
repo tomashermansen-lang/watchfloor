@@ -1,0 +1,72 @@
+[
+  {
+    "file": "claude/tools/grinder.sh",
+    "line": 15,
+    "endLine": 15,
+    "column": 5,
+    "endColumn": 20,
+    "level": "error",
+    "code": 2086,
+    "message": "Double quote to prevent globbing and word splitting."
+  },
+  {
+    "file": "claude/tools/grinder.sh",
+    "line": 22,
+    "endLine": 22,
+    "column": 1,
+    "endColumn": 10,
+    "level": "warning",
+    "code": 2034,
+    "message": "VAR appears unused. Verify use (or export)."
+  },
+  {
+    "file": "claude/tools/grinder.sh",
+    "line": 50,
+    "endLine": 50,
+    "column": 3,
+    "endColumn": 15,
+    "level": "warning",
+    "code": 2155,
+    "message": "Declare and assign separately to avoid masking return values."
+  },
+  {
+    "file": "claude/tools/autopilot.sh",
+    "line": 10,
+    "endLine": 10,
+    "column": 1,
+    "endColumn": 8,
+    "level": "error",
+    "code": 2086,
+    "message": "Double quote to prevent globbing and word splitting."
+  },
+  {
+    "file": "claude/tools/autopilot.sh",
+    "line": 45,
+    "endLine": 45,
+    "column": 1,
+    "endColumn": 12,
+    "level": "info",
+    "code": 2148,
+    "message": "Tips depend on target shell and target OS."
+  },
+  {
+    "file": "claude/tools/commit-preflight.sh",
+    "line": 5,
+    "endLine": 5,
+    "column": 1,
+    "endColumn": 8,
+    "level": "warning",
+    "code": 2034,
+    "message": "VAR appears unused. Verify use (or export)."
+  },
+  {
+    "file": "claude/tools/commit-preflight.sh",
+    "line": 30,
+    "endLine": 30,
+    "column": 1,
+    "endColumn": 15,
+    "level": "style",
+    "code": 2196,
+    "message": "Escape sequences in single quotes won't expand."
+  }
+]

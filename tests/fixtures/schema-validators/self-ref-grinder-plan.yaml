@@ -1,0 +1,13 @@
+created_at: "2026-04-17T10:00:00Z"
+git_sha_at_start: "abc123"
+estimated_batches: 1
+estimated_hours: 0.5
+passes:
+  - id: "pass-1"
+    kind: "mechanical"
+    batches:
+      - id: "001"
+        files: ["a.py"]
+        estimated_turns: 1
+        status: "pending"
+        depends_on: ["001"]

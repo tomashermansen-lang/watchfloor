@@ -1,0 +1,76 @@
+schema_version: 2.0.0
+name: runner-overrides-invalid-env-key
+vision: A single-task plan with an intentionally lowercase runner.env key, used to drive AS8/R10/R11 validate-plan diagnostics. Not for production execution.
+users:
+  - tests/test_validate_plan_runner.py asserting both structural and semantic errors fire
+success_criteria:
+  - id: SC-1
+    description: validate-plan.py rejects the plan with both the schema-structural error and the operator-facing semantic diagnostic naming task-8.
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - validate-plan.py rejection path for malformed runner.env key
+  out_of_scope:
+    - runtime chain behaviour
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse:
+  - adapters/claude-code/claude/tools/validate-plan.py
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope: []
+kill_criteria:
+  - id: KC-1
+    description: validate-plan.py accepts the plan even though runner.env key is lowercase
+design_notes:
+  - id: DN-1
+    note: single task fixture so the operator-facing diagnostic test can assert exact task-id wording
+risks:
+  - id: RSK-1
+    description: schema changes that loosen the POSIX env-key pattern
+    severity: low
+phases:
+  - id: harness
+    name: Harness
+    overview_summary: One-task fixture with a deliberately invalid lowercase runner.env key.
+    sequencing_rationale: smallest-first — single task is the minimum that exercises the validator's per-task diagnostic path.
+    tasks:
+      - id: task-8
+        name: Task 8 with bad env key
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Single task with lowercase runner.env key 'local_llm_routing' to drive the validator rejection path and operator-facing diagnostic.
+        why: Anchors R10 semantic diagnostic naming the task id and bad key. Schema patternProperties already fires the structural error; the semantic line names task-8 explicitly.
+        where:
+          modify:
+            - tests/fake/task-8.txt
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against this fixture, it shall exit non-zero with both the structural and semantic errors emitted.
+        prompt: No-op stub for the validator test exercising the bad-env-key case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            local_llm_routing: '1'

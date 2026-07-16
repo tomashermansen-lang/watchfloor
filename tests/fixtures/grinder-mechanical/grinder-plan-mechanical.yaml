@@ -1,0 +1,21 @@
+created_at: '2026-04-17T10:00:00+00:00'
+estimated_batches: 2
+estimated_hours: 1.0
+git_sha_at_start: REPLACE_SHA
+project: test-project
+staleness_commit_threshold: 10
+passes:
+- batches:
+  - estimated_turns: 5
+    files:
+    - src/app.py
+    - src/mock file.py
+    id: batch-001
+    status: pending
+  - estimated_turns: 3
+    files:
+    - scripts/deploy.sh
+    id: batch-002
+    status: pending
+  id: pass-mechanical
+  kind: mechanical

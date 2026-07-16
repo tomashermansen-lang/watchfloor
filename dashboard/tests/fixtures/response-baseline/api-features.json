@@ -1,0 +1,10 @@
+{
+  "slug": "api-features",
+  "method": "GET",
+  "path": "/api/features",
+  "query": "",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "[{\"name\": \"widget\", \"project\": \"alpha\", \"project_root\": \"__HERMETIC_HOME__\", \"phase\": \"plan\", \"phase_index\": 1, \"total_phases\": 9, \"pipeline_type\": \"light\", \"artifacts\": [{\"name\": \"REQUIREMENTS.md\", \"file\": \"REQUIREMENTS.md\"}, {\"name\": \"PLAN.md\", \"file\": \"PLAN.md\"}], \"sessions\": [{\"sid\": \"hermetic-sid-1\", \"status\": \"completed\", \"last_ts\": \"2024-01-01T00:00:00Z\"}, {\"sid\": \"hermetic-sid-2\", \"status\": \"completed\", \"last_ts\": \"2024-01-01T00:00:10Z\"}], \"status\": \"paused\", \"stuck_info\": null, \"last_activity\": \"2024-01-01T00:00:10Z\", \"is_autopilot\": false, \"lifecycle\": \"inprogress\", \"done_at\": null}]"
+}

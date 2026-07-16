@@ -1,0 +1,56 @@
+schema_version: 2.0.0
+name: boundary-task-fixture
+vision: Positive fixture (EVAL-1) — task at every cap boundary passes silently.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 0 silently for a task at every cap boundary
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Task at every cap boundary — proves caps are inclusive.
+    sequencing_rationale: walking-skeleton — exercises the inclusive-cap boundaries (EVAL-1 from REQUIREMENTS § Eval Cases)
+    tasks:
+      - id: boundary-task
+        name: At-cap boundary task
+        task_type: development
+        status: pending
+        what: This task is sufficiently long and is sized at every R-A cap boundary — 5 acceptance, 200 LOC, 3 hours, 4 touched paths — to prove the caps are inclusive (caps tightened 2026-05-07).
+        why: Boundary fixtures lock the >-vs->= semantics so a future refactor cannot accidentally tighten the cap and break compliant plans.
+        where:
+          modify:
+            - a.py
+            - b.py
+            - c.py
+          create:
+            - d.py
+          delete: []
+        acceptance:
+          - When ac=1 fires, the system shall pass.
+          - When ac=2 fires, the system shall pass.
+          - When ac=3 fires, the system shall pass.
+          - When ac=4 fires, the system shall pass.
+          - When ac=5 fires, the system shall pass.
+        prompt: boundary-task
+        estimate:
+          lines_estimate: 200
+          duration_hours: 3

@@ -1,0 +1,13 @@
+{
+  "aligned": [
+    {
+      "declared_files": ["a.sh", "b.sh", "c.sh"],
+      "actual_files": ["a.sh", "b.sh", "c.sh"],
+      "lines_estimate": 100,
+      "actual_loc": 80,
+      "ac_count": 4,
+      "actual_ac_count": 4,
+      "expected_verdict": "aligned"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+# pnpm workspace settings.
+#
+# allowBuilds: explicit allowlist of packages whose install scripts are
+# executed (pnpm 11 is deny-by-default for security).
+#
+# Cross-worktree dedup: pnpm's default content-addressable store at
+# ~/Library/pnpm/store/ already hardlinks files across all worktrees,
+# so each worktree's `node_modules/` is mostly symlinks costing ~zero
+# extra disk. The advanced `enableGlobalVirtualStore: true` flag (still
+# pre-release in pnpm 11.0.4) breaks vitest module resolution — keep
+# default until upstream is stable.
+allowBuilds:
+  esbuild: true

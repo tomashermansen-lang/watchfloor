@@ -1,0 +1,77 @@
+schema_version: 2.0.0
+name: runner-overrides-invalid-flags-item
+vision: A single-task plan with an intentionally non-string runner.flags entry, used to drive AS9/R10/R11 validate-plan diagnostics. Not for production execution.
+users:
+  - tests/test_validate_plan_runner.py asserting both structural and semantic errors fire
+success_criteria:
+  - id: SC-1
+    description: validate-plan.py rejects the plan with both the schema-structural error and the operator-facing semantic diagnostic naming task-9.
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - validate-plan.py rejection path for non-string runner.flags entry
+  out_of_scope:
+    - runtime chain behaviour
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse:
+  - adapters/claude-code/claude/tools/validate-plan.py
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope: []
+kill_criteria:
+  - id: KC-1
+    description: validate-plan.py accepts the plan even though runner.flags item is an integer
+design_notes:
+  - id: DN-1
+    note: single task fixture so the operator-facing diagnostic test can assert exact task-id wording
+risks:
+  - id: RSK-1
+    description: schema changes that loosen the items.type=string constraint
+    severity: low
+phases:
+  - id: harness
+    name: Harness
+    overview_summary: One-task fixture with a deliberately invalid integer in runner.flags.
+    sequencing_rationale: smallest-first — single task is the minimum that exercises the validator's per-task diagnostic path.
+    tasks:
+      - id: task-9
+        name: Task 9 with bad flags item
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Single task with non-string runner.flags entry (integer 42 at index 1) to drive validator rejection and operator-facing diagnostic.
+        why: Anchors R10 semantic diagnostic naming the task id and bad index. Schema items.type=string already fires the structural error; the semantic line names task-9 explicitly.
+        where:
+          modify:
+            - tests/fake/task-9.txt
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against this fixture, it shall exit non-zero with both the structural and semantic errors emitted.
+        prompt: No-op stub for the validator test exercising the bad-flags-item case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - --stop-after-phase
+            - 42

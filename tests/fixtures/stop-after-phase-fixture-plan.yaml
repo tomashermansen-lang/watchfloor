@@ -1,0 +1,98 @@
+schema_version: 2.0.0
+name: stop-after-phase-fixture
+vision: A 2-task plan exercising the chain --stop-after-phase forwarding contract. Used only by tests/test_stop_after_phase_chain.sh — no production execution.
+users:
+  - tests/test_stop_after_phase_chain.sh driving autopilot-chain.sh against a stubbed AUTOPILOT_CMD
+success_criteria:
+  - id: SC-1
+    description: chain forwards --stop-after-phase to the first task and never launches the second
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - chain flag-forwarding happy path
+    - chain partial-summary detection
+  out_of_scope:
+    - real autopilot.sh invocation
+    - real claude -p invocation
+tech_stack:
+  - bash 3.2
+  - python3
+existing_infrastructure_to_reuse:
+  - adapters/claude-code/claude/tools/autopilot-chain.sh
+  - adapters/claude-code/claude/tools/lib/phase-selector.sh
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope:
+    - SonarQube provisioning
+kill_criteria:
+  - id: KC-1
+    description: chain forwards the flag and yet still launches both tasks
+design_notes:
+  - id: DN-1
+    note: fixture has two pending autopilot tasks with no dependency between them
+risks:
+  - id: RSK-1
+    description: fixture drift if PHASE_ORDER changes shape
+    severity: low
+phases:
+  - id: harness
+    name: Harness
+    overview_summary: Two-task fixture for chain-side stop-after-phase tests.
+    sequencing_rationale: Two pending tasks with no depends arrow let the chain test verify that task-a halts and task-b is never launched.
+    tasks:
+      - id: task-a
+        name: Task A
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task that the chain stop-after-phase test launches first; its stub autopilot writes status=partial and exits 0 so the chain detects the partial summary.
+        why: Anchors the chain harvest-time partial detection probe; without a launched task the chain has nothing to inspect for stop_after_phase detection.
+        where:
+          modify:
+            - tests/test_stop_after_phase_chain.sh
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-a with --stop-after-phase implement, the recorded argv for the stub shall contain --stop-after-phase implement.
+          - When the stub writes status=partial, the chain shall emit one chain_stopped event referencing task-a.
+        prompt: No-op stub for the chain test.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+      - id: task-b
+        name: Task B
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task that the chain stop-after-phase test must never launch after task-a returns a partial summary.
+        why: Anchors the chain halt-on-first-partial behaviour; with two pending tasks present the test can prove the second slot is never launched.
+        where:
+          modify:
+            - tests/test_stop_after_phase.sh
+          create: []
+          delete: []
+        acceptance:
+          - When task-a exits with status=partial, the chain shall not launch task-b.
+        prompt: No-op stub for the chain test.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0

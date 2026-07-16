@@ -1,0 +1,10 @@
+{
+  "slug": "api-autopilot-artifacts",
+  "method": "GET",
+  "path": "/api/autopilot/artifacts",
+  "query": "task=zzznonexistent",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "[]"
+}

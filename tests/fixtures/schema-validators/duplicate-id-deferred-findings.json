@@ -1,0 +1,22 @@
+[
+  {
+    "finding_id": "shellcheck:SC2086-auth-a3f2c8d1",
+    "rule": "SC2086",
+    "file": "claude/tools/auth.sh",
+    "line": 42,
+    "state": "WontFix",
+    "reason": "Variable is always a single word in this context and quoting would break the glob expansion that follows",
+    "owner": "pipeline",
+    "reviewed_at": "2026-04-17"
+  },
+  {
+    "finding_id": "shellcheck:SC2086-auth-a3f2c8d1",
+    "rule": "SC2086",
+    "file": "claude/tools/auth.sh",
+    "line": 50,
+    "state": "WontFix",
+    "reason": "Same variable used consistently without quotes throughout this function per team convention agreed in Sprint 12",
+    "owner": "pipeline",
+    "reviewed_at": "2026-04-17"
+  }
+]

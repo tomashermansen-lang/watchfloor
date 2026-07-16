@@ -1,0 +1,72 @@
+schema_version: "1.0.0"
+name: "Feature Name"
+description: "Single feature within an existing project."
+phases:
+  - id: analysis
+    name: "Phase 0: Analysis"
+    description: "Requirements and design"
+    tasks:
+      - id: requirements
+        name: "Requirements"
+        status: pending
+        prompt: "/start requirements"
+        acceptance:
+          - "Requirements documented"
+          - "Acceptance criteria defined"
+      - id: design
+        name: "Design"
+        status: pending
+        depends:
+          - requirements
+        prompt: "/start design"
+        acceptance:
+          - "Architecture plan approved"
+    gate:
+      name: "Analysis Gate"
+      checklist:
+        - "Requirements reviewed"
+        - "Plan approved"
+      passed: false
+
+  - id: implement
+    name: "Phase 1: Implement"
+    description: "TDD implementation"
+    tasks:
+      - id: implementation
+        name: "Implementation"
+        status: pending
+        prompt: "/start implementation"
+        acceptance:
+          - "All tests pass"
+          - "SOLID principles verified"
+    gate:
+      name: "Implementation Gate"
+      checklist:
+        - "All tests green"
+        - "No TODOs in code"
+      passed: false
+
+  - id: verify
+    name: "Phase 2: Verify"
+    description: "QA and manual testing"
+    tasks:
+      - id: manual-test
+        name: "Manual Testing"
+        status: pending
+        prompt: "/start manual-test"
+        acceptance:
+          - "All acceptance scenarios pass"
+      - id: qa-review
+        name: "QA Review"
+        status: pending
+        depends:
+          - manual-test
+        prompt: "/start qa-review"
+        acceptance:
+          - "QA report approved"
+    gate:
+      name: "Release Gate"
+      checklist:
+        - "QA report clean"
+        - "No regressions"
+      passed: false

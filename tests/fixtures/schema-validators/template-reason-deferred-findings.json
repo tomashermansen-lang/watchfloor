@@ -1,0 +1,12 @@
+[
+  {
+    "finding_id": "shellcheck:SC2086-auth-a3f2c8d1",
+    "rule": "SC2086",
+    "file": "claude/tools/auth.sh",
+    "line": 42,
+    "state": "WontFix",
+    "reason": "Pre-existing technical debt from initial release that has been present since the project inception",
+    "owner": "pipeline",
+    "reviewed_at": "2026-04-17"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "finding_id": "python:S3776-auth.py-42",
+    "rule": "S3776",
+    "file": "claude/tools/auth.py",
+    "line": 42,
+    "state": "WontFix",
+    "reason": "Cognitive complexity is acceptable here because the function handles multiple distinct authentication strategies in sequence",
+    "owner": "pipeline",
+    "reviewed_at": "2026-04-17"
+  }
+]

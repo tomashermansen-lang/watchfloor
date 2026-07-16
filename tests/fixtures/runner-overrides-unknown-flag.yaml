@@ -1,0 +1,118 @@
+schema_version: 2.0.0
+name: runner-overrides-unknown-flag
+vision: A three-task plan whose first task carries an unknown CLI flag in runner.flags. Drives the AS10/R14/R15/R16/R22 chain_blocked runtime path.
+users:
+  - tests/test_chain_runner_overrides.sh asserting chain emits exactly one chain_blocked event and halts
+success_criteria:
+  - id: SC-1
+    description: chain emits a chain_blocked event with reason=unknown_runner_flag and bad_flag=--definitely-not-a-real-flag, then halts before launching dependent tasks.
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - chain reaction to autopilot.sh exit 2 + unknown_runner_flag sentinel
+    - drain-and-halt semantics on the unknown-flag path
+  out_of_scope:
+    - real autopilot.sh invocation
+tech_stack:
+  - bash 3.2
+  - python3
+existing_infrastructure_to_reuse:
+  - adapters/claude-code/claude/tools/autopilot-chain.sh
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope: []
+kill_criteria:
+  - id: KC-1
+    description: chain continues to launch dependent tasks after the unknown_runner_flag halt
+design_notes:
+  - id: DN-1
+    note: task-10-sibling has no depends arrow so the chain may start it concurrently — verifies the drain semantic; task-10-dep depends on task-10 so the chain must skip it after the halt
+risks:
+  - id: RSK-1
+    description: chain halts immediately without draining in-flight slots, orphaning sibling subprocesses
+    severity: medium
+phases:
+  - id: harness
+    name: Harness
+    overview_summary: Three-task fixture where task-10 carries an unknown runner.flag and its sibling drains while the dependent never launches.
+    sequencing_rationale: riskiest-first — task-10 is the violator and gates whether the dependent ever runs; the sibling validates the drain semantic.
+    tasks:
+      - id: task-10
+        name: Task 10 with unknown runner.flag
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner.flags --definitely-not-a-real-flag — chain detects autopilot.sh exit 2 + sentinel and emits chain_blocked.
+        why: Anchors AS10/R14/R15/R16 — the chain must emit exactly one chain_blocked event with reason=unknown_runner_flag and bad_flag=--definitely-not-a-real-flag, then halt.
+        where:
+          modify:
+            - tests/fake/task-10.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-10 and the stub writes the unknown_runner_flag sentinel + exits 2, chain-events.ndjson shall contain exactly one chain_blocked record naming the bad flag.
+        prompt: No-op stub for the chain test exercising the unknown-flag halt case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - --definitely-not-a-real-flag
+      - id: task-10-sibling
+        name: Task 10 sibling for drain semantic
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Sibling task with no runner field — drives the assertion that the chain drains in-flight slots before exiting on the unknown_runner_flag path.
+        why: Anchors R14 drain semantic — chain may have launched this task concurrently with task-10; it must finish before the chain exits, never be orphaned.
+        where:
+          modify:
+            - tests/fake/task-10-sibling.txt
+          create: []
+          delete: []
+        acceptance:
+          - When task-10 emits chain_blocked, the chain shall still wait for task-10-sibling to complete before exiting.
+        prompt: No-op stub for the chain test exercising the drain case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+      - id: task-10-dep
+        name: Task 10 dependent that must not launch
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Dependent task that requires task-10 to complete first — drives the assertion that the chain does NOT launch dependents after the unknown_runner_flag halt.
+        why: Anchors R14 dependency gating — the chain must skip every task that depends on the blocked task, including transitively dependent ones, until the operator fixes the offending flag.
+        where:
+          modify:
+            - tests/fake/task-10-dep.txt
+          create: []
+          delete: []
+        acceptance:
+          - When task-10 triggers chain_blocked, the chain shall NOT launch task-10-dep, leaving its argv recording absent post-run.
+        prompt: No-op stub for the chain test exercising the dependent-not-launched case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        depends:
+          - task-10

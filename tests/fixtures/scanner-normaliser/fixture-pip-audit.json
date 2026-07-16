@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    {
+      "name": "requests",
+      "version": "2.25.0",
+      "vulns": [
+        {
+          "id": "CVE-2024-1234",
+          "fix_versions": ["2.31.0"],
+          "description": "SSRF via crafted URL"
+        },
+        {
+          "id": "PYSEC-2024-5678",
+          "fix_versions": ["2.31.0"],
+          "description": "Header injection vulnerability"
+        }
+      ]
+    },
+    {
+      "name": "flask",
+      "version": "2.0.0",
+      "vulns": []
+    }
+  ]
+}

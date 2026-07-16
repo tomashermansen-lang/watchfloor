@@ -1,0 +1,47 @@
+schema_version: 2.0.0
+name: oversized-lines-estimate-fixture
+vision: Negative fixture — task with lines_estimate above 200 trips R-A2 hard cap.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 with R-A2 lines_estimate error
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage for R-A2.
+    sequencing_rationale: walking-skeleton — exercises the lines_estimate hard-cap path
+    tasks:
+      - id: huge-task
+        name: Huge sizing task
+        task_type: development
+        status: pending
+        what: This task is sufficiently long but declares lines_estimate of 250 which exceeds the R-A2 hard cap of 200 LOC.
+        why: Tasks above 300 LOC have empirical pass-rate < 45% (SWE-Bench Pro avg 107 LOC); the producer self-review must propose a vertical split before emit.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When the validator runs, the system shall exit 1.
+        prompt: oversized-lines
+        estimate:
+          lines_estimate: 250
+          duration_hours: 2

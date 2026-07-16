@@ -1,0 +1,15 @@
+schema_version: "1.0.0"
+name: Plan with existing phase_results
+phases:
+  - id: phase-1
+    name: Phase 1
+    tasks:
+      - id: task-a
+        name: Task A
+        status: wip
+        phase_results:
+          - phase: ba
+            timestamp: "2026-04-30T08:00:00Z"
+            conformance: aligned
+            acceptance_status: met
+            deviations: []

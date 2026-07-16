@@ -1,0 +1,47 @@
+schema_version: 2.0.0
+name: bad-sequencing-rationale-fixture
+vision: Negative fixture — phase with sequencing_rationale='foo' trips R-C4 enum/min-length check.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 with R-C4 sequencing_rationale enum error
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: phase-1
+    name: Phase 1
+    overview_summary: Negative coverage for R-C4.
+    sequencing_rationale: foo
+    tasks:
+      - id: t1
+        name: T1
+        task_type: development
+        status: pending
+        what: This task is sufficiently long and exercises the validator's per-phase sequencing-rationale enum/min-length check.
+        why: phase.sequencing_rationale must match the enum or be at least 40 characters of custom prose so the rationale is auditable.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When the validator runs, the system shall exit 1 with the rationale rule.
+        prompt: bad-rationale
+        estimate:
+          lines_estimate: 100
+          duration_hours: 1

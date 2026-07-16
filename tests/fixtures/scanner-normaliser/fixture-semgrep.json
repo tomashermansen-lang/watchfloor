@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "check_id": "python.lang.security.audit.exec-detected",
+      "path": "src/app.py",
+      "start": {"line": 15, "col": 1},
+      "end": {"line": 15, "col": 20},
+      "extra": {
+        "message": "Detected use of exec().",
+        "severity": "ERROR"
+      }
+    },
+    {
+      "check_id": "python.lang.best-practice.open-never-closed",
+      "path": "src/utils.py",
+      "start": {"line": 8, "col": 1},
+      "end": {"line": 8, "col": 30},
+      "extra": {
+        "message": "File opened but never closed.",
+        "severity": "WARNING"
+      }
+    },
+    {
+      "check_id": "python.lang.maintainability.useless-comparison",
+      "path": "src/config.py",
+      "start": {"line": 3, "col": 1},
+      "end": {"line": 3, "col": 10},
+      "extra": {
+        "message": "Useless comparison of identical values.",
+        "severity": "INFO"
+      }
+    }
+  ]
+}

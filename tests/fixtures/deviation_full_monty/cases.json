@@ -1,0 +1,214 @@
+{
+  "positive": [
+    {
+      "case": "type:integration_gap",
+      "type": "integration_gap",
+      "description": "Integration gap detected between phase output and downstream consumer.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "added",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:gate_logic_drift",
+      "type": "gate_logic_drift",
+      "description": "Gate logic drifted from declared acceptance criteria.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "modified",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:error_reporting_tautology",
+      "type": "error_reporting_tautology",
+      "description": "Error message tautologically restates input without diagnostic value.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "modified",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:factual_error",
+      "type": "factual_error",
+      "description": "Producer made a factual error about file path or test count.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "modified",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:test_tautology",
+      "type": "test_tautology",
+      "description": "Test asserts the implementation against itself, providing no coverage.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "modified",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:sycophancy",
+      "type": "sycophancy",
+      "description": "Producer agreed with reviewer without independent verification.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "modified",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:acceptance_reinterpretation",
+      "type": "acceptance_reinterpretation",
+      "description": "Acceptance criterion silently reinterpreted to a weaker form.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "modified",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "type:architectural_change_without_anchor",
+      "type": "architectural_change_without_anchor",
+      "description": "Architectural change introduced without anchoring documentation.",
+      "reason": "Producer test fixture for DT-16.",
+      "impact": "added",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "confidence:0.0",
+      "type": "integration_gap",
+      "description": "Confidence boundary positive (lower).",
+      "reason": "Boundary fixture for DT-21.",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": 0.0
+    },
+    {
+      "case": "confidence:1.0",
+      "type": "integration_gap",
+      "description": "Confidence boundary positive (upper).",
+      "reason": "Boundary fixture for DT-21.",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": 1.0
+    },
+    {
+      "case": "confidence:int-1",
+      "type": "integration_gap",
+      "description": "Confidence accepts integer literal as JSON number.",
+      "reason": "Boundary fixture for DT-21 (EC-8).",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": 1
+    },
+    {
+      "case": "confidence:0.5",
+      "type": "integration_gap",
+      "description": "Confidence mid-range positive.",
+      "reason": "Boundary fixture for DT-21.",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": 0.5
+    },
+    {
+      "case": "evidence:80-char-boundary",
+      "type": "integration_gap",
+      "description": "Evidence boundary positive (exactly 80 characters).",
+      "reason": "Boundary fixture for DT-22.",
+      "impact": "added",
+      "criteria_affected": ["AC-3"],
+      "evidence": "01234567890123456789012345678901234567890123456789012345678901234567890123456789"
+    },
+    {
+      "case": "assessor-shape",
+      "type": "integration_gap",
+      "description": "Combined assessor-shape entry with confidence and 200-char evidence.",
+      "reason": "Combined fixture for DT-17 (AS-2 + EC-9).",
+      "impact": "added",
+      "criteria_affected": ["AC-2", "AC-3"],
+      "confidence": 0.85,
+      "evidence": "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
+    }
+  ],
+  "negative": [
+    {
+      "case": "confidence:-0.1",
+      "type": "integration_gap",
+      "description": "Confidence below lower bound.",
+      "reason": "Negative fixture for DT-19.",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": -0.1
+    },
+    {
+      "case": "confidence:1.1",
+      "type": "integration_gap",
+      "description": "Confidence above upper bound.",
+      "reason": "Negative fixture for DT-19.",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": 1.1
+    },
+    {
+      "case": "confidence:2.0",
+      "type": "integration_gap",
+      "description": "Confidence well above upper bound.",
+      "reason": "Negative fixture for DT-19.",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": 2.0
+    },
+    {
+      "case": "confidence:string",
+      "type": "integration_gap",
+      "description": "Confidence as string (type strictness).",
+      "reason": "Negative fixture for DT-19 (EC-4).",
+      "impact": "added",
+      "criteria_affected": ["AC-2"],
+      "confidence": "0.5"
+    },
+    {
+      "case": "evidence:length-0",
+      "type": "integration_gap",
+      "description": "Evidence empty string (length 0).",
+      "reason": "Negative fixture for DT-18 (EC-7).",
+      "impact": "added",
+      "criteria_affected": ["AC-3"],
+      "evidence": ""
+    },
+    {
+      "case": "evidence:length-1",
+      "type": "integration_gap",
+      "description": "Evidence single character (length 1).",
+      "reason": "Negative fixture for DT-18.",
+      "impact": "added",
+      "criteria_affected": ["AC-3"],
+      "evidence": "x"
+    },
+    {
+      "case": "evidence:length-79",
+      "type": "integration_gap",
+      "description": "Evidence one below the 80-char floor.",
+      "reason": "Negative fixture for DT-18.",
+      "impact": "added",
+      "criteria_affected": ["AC-3"],
+      "evidence": "0123456789012345678901234567890123456789012345678901234567890123456789012345678"
+    },
+    {
+      "case": "evidence:number",
+      "type": "integration_gap",
+      "description": "Evidence as number (type strictness).",
+      "reason": "Negative fixture for DT-22 (EC-5).",
+      "impact": "added",
+      "criteria_affected": ["AC-3"],
+      "evidence": 12345
+    },
+    {
+      "case": "type:made_up_category",
+      "type": "made_up_category",
+      "description": "Type outside the union of original 4 + new 8.",
+      "reason": "Negative fixture for DT-20.",
+      "impact": "added",
+      "criteria_affected": ["AC-1"]
+    },
+    {
+      "case": "additional:severity",
+      "type": "integration_gap",
+      "description": "Unknown additional field on a deviation entry.",
+      "reason": "Negative fixture for DT-23 (R4 / EC-6).",
+      "impact": "added",
+      "criteria_affected": ["AC-1"],
+      "severity": "high"
+    }
+  ]
+}

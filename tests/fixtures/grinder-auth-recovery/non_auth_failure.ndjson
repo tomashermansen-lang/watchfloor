@@ -1,0 +1,3 @@
+{"type":"system","subtype":"init","session_id":"deadbeef-9999-8888-7777-666666666666"}
+{"type":"assistant","message":{"content":"trying to fix..."}}
+{"type":"result","subtype":"success","is_error":true,"result":"validation failed: missing field","num_turns":3,"session_id":"deadbeef-9999-8888-7777-666666666666"}

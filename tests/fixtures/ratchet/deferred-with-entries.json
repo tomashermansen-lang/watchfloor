@@ -1,0 +1,22 @@
+[
+  {
+    "finding_id": "shellcheck:SC2034-deploy.sh-ccdd3344",
+    "rule": "SC2034",
+    "file": "claude/tools/deploy.sh",
+    "line": 50,
+    "state": "Accepted",
+    "reason": "Pre-existing finding auto-logged by grinder baseline scan 2026-04-20",
+    "owner": "tomas",
+    "reviewed_at": "2026-04-20"
+  },
+  {
+    "finding_id": "shellcheck:SC2155-other.sh-eeff5566",
+    "rule": "SC2155",
+    "file": "claude/tools/other.sh",
+    "line": 5,
+    "state": "Accepted",
+    "reason": "Pre-existing finding auto-logged by grinder baseline scan 2026-04-20",
+    "owner": "tomas",
+    "reviewed_at": "2026-04-20"
+  }
+]

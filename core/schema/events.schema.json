@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events.schema.json",
+  "$comment": "Defines a single NDJSON event line from events.ndjson. Validates one line at a time — the NDJSON file-level concerns (line splitting, truncated final line tolerance for crash recovery) are handled by the validator, not this schema. Optional fields are listed globally rather than per-event-type (no if/then/else) because the orchestrator controls which fields are emitted per event type; conditional schemas would add complexity without catching real bugs since these files are never hand-edited.",
+  "type": "object",
+  "required": ["ts", "batch", "event"],
+  "additionalProperties": false,
+  "properties": {
+    "ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "batch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event": {
+      "type": "string",
+      "enum": ["started", "completed", "failed", "abandoned", "deferred", "paused", "resumed"]
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "files_fixed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tests_added": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "turns": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "reason": {
+      "type": "string"
+    },
+    "reverted": {
+      "type": "boolean"
+    },
+    "cve": {
+      "type": "string"
+    },
+    "cve_count": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "slug": "api-plan",
+  "method": "GET",
+  "path": "/api/plan",
+  "query": "cwd=__HERMETIC_HOME__",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "{\"schema_version\": \"2.0.0\", \"name\": \"hermetic-alpha\", \"vision\": \"Synthetic root-level plan for byte-equivalence testing.\", \"users\": [\"test harness\"], \"success_criteria\": [{\"id\": \"SC-A\", \"description\": \"Renders identically across runs.\", \"measurable_via\": \"test\", \"verified_at_phase\": \"hermetic\"}], \"scope\": {\"in_scope\": [\"hermetic byte-equivalence\"], \"out_of_scope\": [\"production behaviour\"]}, \"phases\": [{\"id\": \"hermetic\", \"name\": \"Hermetic phase\", \"tasks\": [{\"id\": \"hermetic-task\", \"name\": \"Hermetic task\", \"status\": \"pending\", \"depends\": [], \"prompt\": \"noop\", \"acceptance\": [\"When run, then return deterministic output.\"]}]}]}"
+}

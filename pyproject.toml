@@ -1,0 +1,123 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dotfiles"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Claude Code CLI pipeline + agent dashboard monorepo"
+dependencies = [
+    "pyyaml>=6.0",
+    "jsonschema>=4.0",
+    "fastapi>=0.110,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pydantic>=2,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-asyncio>=0.23,<1",
+    "pytest-cov>=4.0",
+    "httpx>=0.27,<1",
+    "ptyprocess>=0.7,<1",
+    "packaging>=23,<26",
+    "mypy>=1.8",
+    "ruff>=0.5",
+    "types-PyYAML>=6.0",
+    "coverage>=7.0",
+]
+
+[tool.setuptools]
+packages = ["dashboard.server"]
+
+[tool.setuptools.package-dir]
+"dashboard.server" = "dashboard/server"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Repo root is automatically on sys.path for pytest, which makes
+# `from dashboard.server.X import Y` resolve. No `dashboard` entry needed
+# since the import-style refactor (2026-05-23) — every Python file now
+# uses the namespaced form. The legacy `claude/tools` paths are dead
+# config (real paths are under adapters/claude-code/...); kept for now
+# to avoid a tangential change in the same commit.
+pythonpath = ["claude/tools", "claude/tools/lib"]
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["claude/tools/lib", "claude/tools/validate-plan.py", "claude/tools/validate-manifest.py"]
+strict = false
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+# Test fixtures contain duplicate module names (fixture-python/src/app.py +
+# fixture-no-tests/src/app.py) that block mypy module resolution when an
+# external caller (e.g., grinder) passes explicit file lists. Excluded so
+# the fixture conflict can never bail mypy out mid-scan.
+exclude = ["tests/fixtures/", "dashboard/tests/fixtures/"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]  # line-too-long handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+
+# Coverage scope for `pytest --cov` (no scope arg → pytest-cov reads this
+# section). Without it, the default `--cov=src` from /static-analysis Step 2.1
+# resolves to a directory that does not exist in this monorepo and produces
+# an empty coverage.xml — Sonar then reports every Python line as 0% covered
+# (the "TDD work invisible on dashboard" symptom diagnosed 2026-05-22).
+#
+# Source paths cover both the dashboard runtime (dashboard.server, via
+# [tool.setuptools] package-dir) and the bash-orchestrator Python helpers
+# (adapters/claude-code/claude/tools and its lib/ subdir, imported per-test
+# via sys.path.insert(LIB_DIR)).
+[tool.coverage.run]
+source = [
+    "adapters/claude-code/claude/tools",
+    "dashboard/server",
+]
+branch = true
+# Subprocess coverage support (coverage.py docs §"Measuring sub-processes"):
+# parallel=true makes every Python process write its own .coverage.<host>.<pid>
+# data file. Without this, the parent-process pytest --cov silently overwrites
+# the subprocess data file on its own write. `coverage combine` merges them.
+# Required for COVERAGE_PROCESS_START + sitecustomize.py to surface coverage
+# of CLI subprocess invocations (validate-plan.py, autopilot.sh's Python
+# helpers, uvicorn child in test_response_compat, etc).
+parallel = true
+sigterm = true
+omit = [
+    "**/__pycache__/**",
+    "**/tests/**",
+    "**/fixtures/**",
+    "**/test_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.9.4",
+    "semgrep>=1.162.0",
+]

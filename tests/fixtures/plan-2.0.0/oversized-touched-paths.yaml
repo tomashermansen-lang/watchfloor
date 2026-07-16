@@ -1,0 +1,54 @@
+schema_version: 2.0.0
+name: oversized-touched-paths-fixture
+vision: Negative fixture — task with 6 touched paths trips R-A4 hard cap.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 with R-A4 touched-paths error
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage for R-A4.
+    sequencing_rationale: walking-skeleton — exercises the touched-paths hard-cap path
+    tasks:
+      - id: wide-task
+        name: Wide sizing task
+        task_type: development
+        status: pending
+        what: This task is sufficiently long but lists 6 paths across modify/create/delete which exceeds the R-A4 hard cap of 4 touched paths.
+        why: Cross-file refactors above 4-5 files have empirical pass-rate ~21% (SWE-EVO); the producer must split by behavioral seam before emit.
+        where:
+          modify:
+            - claude/tools/a.py
+            - claude/tools/b.py
+            - claude/tools/c.py
+          create:
+            - claude/tools/d.py
+            - claude/tools/e.py
+          delete:
+            - claude/tools/f.py
+        acceptance:
+          - When the validator runs, the system shall exit 1.
+        prompt: oversized-touched-paths
+        estimate:
+          lines_estimate: 150
+          duration_hours: 2

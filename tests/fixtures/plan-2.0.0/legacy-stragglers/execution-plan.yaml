@@ -1,0 +1,44 @@
+schema_version: 2.0.0
+name: legacy-stragglers
+vision: 2.0 plan with sibling legacy artefacts to verify R14 WARNING emission and exit 0.
+users:
+  - operator inspecting straggler warnings
+success_criteria:
+  - id: SC-1
+    description: validator exits 0 and emits one WARNING per legacy sibling
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Sanity coverage.
+    sequencing_rationale: This fixture proves the legacy-artefact warnings do not change exit code, only stderr.
+    tasks:
+      - id: t1
+        name: T1
+        task_type: documentation
+        status: pending
+        what: Plan contains sibling legacy artefacts so the validator emits WARNING per file but still exits 0 because warnings are non-fatal.
+        why: Operators migrating from 1.x will leave straggler markdown and JSON files; validator must surface them without blocking the migration window.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When validate-plan.py runs, the system shall exit 0 and stderr shall contain WARNING per legacy sibling file.
+        prompt: t1

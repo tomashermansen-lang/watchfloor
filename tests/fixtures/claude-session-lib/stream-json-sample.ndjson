@@ -1,0 +1,7 @@
+{"type":"assistant","message":{"content":[{"type":"text","text":"I will read the file now."}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"description":"Read config file","file_path":"/tmp/test.txt"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","content":"line1\nline2\nline3"}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"The file contains three lines."}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"echo hello","description":"Print hello"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","content":"hello"}]}}
+{"type":"result","subtype":"success","total_cost_usd":0.42,"duration_ms":15000,"num_turns":3}

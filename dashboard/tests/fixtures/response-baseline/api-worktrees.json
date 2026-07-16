@@ -1,0 +1,10 @@
+{
+  "slug": "api-worktrees",
+  "method": "GET",
+  "path": "/api/worktrees",
+  "query": "cwd=__HERMETIC_HOME__",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "[{\"path\": \"__HERMETIC_HOME__\", \"branch\": \"main\"}]"
+}

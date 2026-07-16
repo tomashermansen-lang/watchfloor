@@ -1,0 +1,26 @@
+diff --git a/claude/tools/deploy.sh b/claude/tools/deploy.sh
+index 1234567..abcdef0 100644
+--- a/claude/tools/deploy.sh
++++ b/claude/tools/deploy.sh
+@@ -7,6 +7,10 @@
+ # existing line 7
+ # existing line 8
+ # existing line 9
++# new line 10 — this is added
++# new line 11 — this is added
++# new line 12 — this is added
++# new line 13 — this is added
+ # existing line 14 (was line 10 before)
+ # existing line 15
+ # existing line 16
+diff --git a/src/utils.py b/src/utils.py
+index 2345678..bcdef01 100644
+--- a/src/utils.py
++++ b/src/utils.py
+@@ -18,6 +18,8 @@
+ # existing line 18
+ # existing line 19
++# new line 20 — added
++# new line 21 — added
+ # existing line 22 (was line 20 before)
+ # existing line 23

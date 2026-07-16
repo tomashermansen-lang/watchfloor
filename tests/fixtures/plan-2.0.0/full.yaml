@@ -1,0 +1,245 @@
+schema_version: 2.0.0
+name: full-fixture
+vision: A multi-phase plan that exercises every 2.0 field including the polymorphic deferred[] discriminator, multi-project test_targets, and artifact_refs path resolution against fixture artefacts.
+users:
+  - operator authoring a real cross-project plan
+  - dashboard renderer consuming the YAML graph
+success_criteria:
+  - id: SC-A
+    description: validate-plan.py exits 0 with no errors and no warnings against full.yaml
+    measurable_via: test
+    verified_at_phase: testplan
+  - id: SC-B
+    description: plan-detection skill orients within 4 reads + 1 glob on the implement task
+    measurable_via: metric
+scope:
+  in_scope:
+    - schema 2.0 contract surface
+    - polymorphic deferred[] discriminator
+    - multi-project paths via test_targets
+  out_of_scope:
+    - dashboard renderer changes
+tech_stack:
+  - python3
+  - jsonschema
+  - PyYAML
+existing_infrastructure_to_reuse:
+  - claude/tools/validate-plan.py
+  - claude/schema/execution-plan.schema.json
+test_targets:
+  - id: dotfiles
+    path: ../../..
+    description: this dotfiles repo (relative to the fixture dir)
+  - id: dashboard
+    path: ../../../dashboard
+    description: dashboard subtree inside this monorepo (post-T2 layout)
+  - id: oih
+    path: ../../../../OIH
+    description: Operations Intelligence Hub — referenced for cross-project drift coverage
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+    - name: pytest
+      verify_cmd: python3 -m pytest --version
+      expected_exit: 0
+      install_hint: pip3 install pytest
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+    - name: jsonschema
+      already_installed: true
+  services_to_provision:
+    - name: SonarQube
+      port: 9100
+      verify_cmd: curl -fsS http://localhost:9100/api/system/status
+      start_cmd: docker compose up -d sonarqube
+      notes: optional — only required for /static-analysis SonarQube checks
+  environment_verification:
+    - cmd: python3 -c 'import yaml,jsonschema'
+      expected_exit: 0
+      description: imports succeed
+  sandbox_compatibility:
+    write_paths:
+      - .
+      - /tmp
+    read_restrictions:
+      - "~/.ssh"
+  out_of_scope:
+    - production credential provisioning
+kill_criteria:
+  - id: KC-A
+    description: schema 2.0 rejects valid 1.x plans
+    trigger: any existing 1.x plan fails validate-plan.py
+  - id: KC-B
+    description: producer self-review enters an infinite retry loop
+design_notes:
+  - id: DN-A
+    note: schema dispatch uses if/then/else on schema_version regex
+  - id: DN-B
+    note: deferred[] is a polymorphic sum type keyed on kind
+risks:
+  - id: RSK-A
+    description: PyYAML round-trip drops comments in deferred[]
+    mitigation: factories emit canonical entries; comments persisted via DEFERRAL_NOTE field
+    severity: low
+  - id: RSK-B
+    description: schema additionalProperties false rejects unknown forward-compat fields
+    mitigation: forward-compat fields are pre-declared with optional shapes
+    severity: medium
+scope_mapping_from_backlog:
+  - backlog_ref: "BACKLOG.md#item-44"
+    plan_phase_id: foundation
+    rationale: "Backlog item #44 explicitly calls for unifying the schema, validator, and producer surface in one autopilot phase before downstream consumers migrate."
+chain_runtime:
+  chain_state_path: .planning/chain-state.json
+  chain_events_path: .planning/chain-events.ndjson
+deferred:
+  - id: DF-1
+    kind: code_finding
+    finding_id: dotfiles:abcdef12
+    rule: ruff:E501
+    file: claude/tools/lib/plan_validators.py
+    line: 42
+    state: Deferred
+    reason: Line length exceeds 100 chars but rewriting splits an inline shingle hash that would hurt readability more than it helps.
+    owner: lead-dev
+    reviewed_at: "2026-04-26T08:00:00Z"
+    review_trigger: may-defer-autolog
+    deferred_at_task_id: schema-core
+  - id: DF-2
+    kind: review_suggestion
+    date: "2026-04-26"
+    feature_or_task_id: validator-2-0
+    phase_id: foundation
+    reviewer: architect
+    category: SOLID
+    description: Consider splitting plan_validators into one file per pattern.
+    reason_deferred: Would split a tightly cohesive module without delivering measurable benefit; revisit if the file exceeds 800 lines.
+  - id: DF-3
+    kind: scope_decision
+    date: "2026-04-26"
+    decided_at_task_id: schema-core
+    decision: deferred
+    rationale: Migrate dashboard renderer outside this autopilot run.
+  - id: DF-4
+    kind: future_enhancement
+    date: "2026-04-26"
+    description: Add ruamel.yaml support for round-trip comment preservation.
+    target_release: "2.1.0"
+quality_warnings: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Schema, validator, and fixtures land first.
+    sequencing_rationale: Schema is the contract; validator anchors all downstream tests; fixtures drive both.
+    kill_criteria_refs:
+      - KC-A
+    cross_cutting_constraints:
+      - YAML safe-load only (no yaml.load)
+    advisory: Validator must preserve 1.x bit-for-bit semantics.
+    tasks:
+      - id: schema-core
+        name: Schema 2.0 core
+        task_type: development
+        status: done
+        what: Extend execution-plan.schema.json with schema 2.0 project, phase, and task field sets via JSON Schema if/then/else dispatch keyed on schema_version regex.
+        why: Without a complete schema contract, validate-plan cannot dispatch on schema_version and producers have no anchor for the five quality patterns; this is the foundation every other component depends on.
+        where:
+          modify:
+            - "dotfiles:claude/schema/execution-plan.schema.json"
+          create:
+            - "dotfiles:tests/fixtures/plan-2.0.0/minimal.yaml"
+            - "dotfiles:tests/fixtures/plan-2.0.0/full.yaml"
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against minimal.yaml, the system shall exit 0 with no errors.
+          - When validate-plan.py runs against full.yaml, the system shall exit 0 with no errors.
+        prompt: Implement schema 2.0 plus minimal and full fixtures.
+        depends: []
+        constraints:
+          - additionalProperties false at every level
+        estimate:
+          lines_estimate: 600
+          duration_hours: 4
+        artifact_refs:
+          plan_path: "dotfiles:docs/DONE_Feature_unified-plan-yaml-schema/PLAN.md"
+        last_updated: "2026-04-26T09:00:00Z"
+      - id: validator-2-0
+        name: Validator 2.0 dispatch
+        task_type: development
+        status: pending
+        what: Add a 2.0 dispatch arm to validate-plan.py that runs jsonschema structural plus the plan_validators pattern checks and emits path-pointing errors per requirement.
+        why: The schema alone cannot express completeness, polymorphic deferred dispatch, EARS notation, or path-existence checks; validate-plan must orchestrate the structural and pattern passes and gate the producer self-review loop.
+        where:
+          modify:
+            - "dotfiles:claude/tools/validate-plan.py"
+          create:
+            - "dotfiles:claude/tools/lib/plan_validators.py"
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against missing-what.yaml, the system shall exit 1 with the expected required-field error.
+          - While the validator runs against a 2.0 plan, plan_validators pattern checks shall be invoked.
+        prompt: Wire validate-plan.py into plan_validators with version dispatch.
+        depends:
+          - schema-core
+        manualtest_scenarios:
+          - "Run validate-plan.py against full.yaml and inspect stderr for warnings."
+        estimate:
+          lines_estimate: 100
+          duration_hours: 2
+  - id: migration
+    name: Tooling migration
+    overview_summary: Migrate seven consumer scripts to read deferred via the YAML graph.
+    sequencing_rationale: Consumer migrations cannot proceed before the schema and validator are stable; running them in a single phase keeps round-trip semantics consistent.
+    cross_cutting_constraints:
+      - Use plan_yaml_deferred as single dispatch point
+    tasks:
+      - id: deferred-helper
+        name: plan_yaml_deferred shared library
+        task_type: development
+        status: pending
+        what: Create a stdlib + PyYAML shared helper module that exposes read, write, append, factory, and detect_plan_version functions for project.deferred[] inside execution-plan.yaml.
+        why: Seven existing scripts read deferred-findings.json directly; without a single dispatch helper the migration risks partial consistency, where some consumers read YAML and others still hit JSON, breaking ratchet semantics.
+        where:
+          create:
+            - "dotfiles:claude/tools/lib/plan_yaml_deferred.py"
+          modify: []
+          delete: []
+        acceptance:
+          - When read_deferred runs against a 2.0 plan, it shall return the deferred entries as a list of dicts.
+          - If a 1.x plan is detected, then the helper shall raise LegacyPlanError so callers can fall back.
+        prompt: Implement plan_yaml_deferred with full public API.
+        depends:
+          - validator-2-0
+        estimate:
+          lines_estimate: 100
+          duration_hours: 2
+  - id: producer
+    name: Producer rewrite
+    overview_summary: /plan-project and /plan emit YAML only and self-review against the five anti-patterns.
+    sequencing_rationale: Producer rewrites depend on a stable schema, validator, and helper API.
+    advisory: Anti-pattern self-review is mandatory.
+    tasks:
+      - id: producer-self-review
+        name: plan_self_review wrapper
+        task_type: development
+        status: pending
+        what: Implement plan_self_review.py CLI wrapper that runs validate-plan plus pattern checks and emits a structured JSON result with retry_advised flag.
+        why: Producer commands need a deterministic, parseable signal to decide retry vs proceed; without a structured wrapper the markdown prompts would have to count retries themselves and would drift from the validator output format.
+        where:
+          create:
+            - "dotfiles:claude/tools/lib/plan_self_review.py"
+          modify: []
+          delete: []
+        acceptance:
+          - When plan_self_review runs against a clean plan, the wrapper shall exit 0 and emit retry_advised false.
+          - While violations remain and attempt is below max_retries, the wrapper shall emit retry_advised true.
+        prompt: Implement plan_self_review and unit tests.
+        depends:
+          - deferred-helper
+        estimate:
+          lines_estimate: 200
+          duration_hours: 2

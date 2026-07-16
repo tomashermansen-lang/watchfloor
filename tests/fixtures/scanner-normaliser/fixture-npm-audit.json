@@ -1,0 +1,42 @@
+{
+  "vulnerabilities": {
+    "lodash": {
+      "name": "lodash",
+      "severity": "critical",
+      "via": [
+        {
+          "source": 1234,
+          "name": "lodash",
+          "url": "https://github.com/advisories/GHSA-xxxx",
+          "title": "Prototype Pollution"
+        }
+      ],
+      "range": "<4.17.21"
+    },
+    "express": {
+      "name": "express",
+      "severity": "high",
+      "via": [
+        {
+          "source": 5678,
+          "name": "express",
+          "url": "https://github.com/advisories/GHSA-yyyy",
+          "title": "Open redirect"
+        }
+      ],
+      "range": "<4.18.0"
+    },
+    "minimist": {
+      "name": "minimist",
+      "severity": "moderate",
+      "via": ["prototype-pollution-pkg"],
+      "range": "<1.2.6"
+    },
+    "qs": {
+      "name": "qs",
+      "severity": "low",
+      "via": [],
+      "range": "<6.3.0"
+    }
+  }
+}

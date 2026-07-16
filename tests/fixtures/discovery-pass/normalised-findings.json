@@ -1,0 +1,72 @@
+[
+  {
+    "id": "shellcheck:SC2086-grinder.sh-a1b2c3d4",
+    "tool": "shellcheck",
+    "rule": "SC2086",
+    "file": "claude/tools/grinder.sh",
+    "line": 15,
+    "severity": "error",
+    "message": "Double quote to prevent globbing and word splitting.",
+    "content_hash": "a1b2c3d4"
+  },
+  {
+    "id": "shellcheck:SC2034-grinder.sh-b2c3d4e5",
+    "tool": "shellcheck",
+    "rule": "SC2034",
+    "file": "claude/tools/grinder.sh",
+    "line": 22,
+    "severity": "warning",
+    "message": "VAR appears unused. Verify use (or export).",
+    "content_hash": "b2c3d4e5"
+  },
+  {
+    "id": "shellcheck:SC2155-grinder.sh-c3d4e5f6",
+    "tool": "shellcheck",
+    "rule": "SC2155",
+    "file": "claude/tools/grinder.sh",
+    "line": 50,
+    "severity": "warning",
+    "message": "Declare and assign separately to avoid masking return values.",
+    "content_hash": "c3d4e5f6"
+  },
+  {
+    "id": "shellcheck:SC2086-autopilot.sh-d4e5f6a7",
+    "tool": "shellcheck",
+    "rule": "SC2086",
+    "file": "claude/tools/autopilot.sh",
+    "line": 10,
+    "severity": "error",
+    "message": "Double quote to prevent globbing and word splitting.",
+    "content_hash": "d4e5f6a7"
+  },
+  {
+    "id": "shellcheck:SC2148-autopilot.sh-e5f6a7b8",
+    "tool": "shellcheck",
+    "rule": "SC2148",
+    "file": "claude/tools/autopilot.sh",
+    "line": 45,
+    "severity": "info",
+    "message": "Tips depend on target shell and target OS.",
+    "content_hash": "e5f6a7b8"
+  },
+  {
+    "id": "shellcheck:SC2034-commit-preflight.sh-f6a7b8c9",
+    "tool": "shellcheck",
+    "rule": "SC2034",
+    "file": "claude/tools/commit-preflight.sh",
+    "line": 5,
+    "severity": "warning",
+    "message": "VAR appears unused. Verify use (or export).",
+    "content_hash": "f6a7b8c9"
+  },
+  {
+    "id": "shellcheck:SC2196-commit-preflight.sh-a7b8c9d0",
+    "tool": "shellcheck",
+    "rule": "SC2196",
+    "file": "claude/tools/commit-preflight.sh",
+    "line": 30,
+    "severity": "info",
+    "message": "Escape sequences in single quotes won't expand.",
+    "content_hash": "a7b8c9d0"
+  }
+]

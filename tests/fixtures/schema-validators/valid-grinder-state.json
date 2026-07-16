@@ -1,0 +1,12 @@
+{
+  "current_pass": "pass-1",
+  "started_at": "2026-04-17T10:00:00Z",
+  "last_updated": "2026-04-17T10:30:00Z",
+  "git_sha_at_start": "abc123def456",
+  "current_batch": "001",
+  "batches_completed": 3,
+  "batches_failed": 0,
+  "batches_pending": 2,
+  "batches_deferred": 1,
+  "paused": false
+}

@@ -1,0 +1,10 @@
+{
+  "languages": ["bash", "python"],
+  "findings": {
+    "shellcheck": {
+      "paths": ["claude/tools/"]
+    },
+    "fix_rules_allowlist": [],
+    "never_touch_files": []
+  }
+}

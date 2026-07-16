@@ -1,0 +1,63 @@
+# deviation-taxonomy.yaml — human-readable companion to the deviation $def
+# enum in core/schema/execution-plan.schema.json. Each top-level key is a
+# category name (matching the enum verbatim) and maps to:
+#
+#   description    — what the category covers and what distinguishes it
+#                    from neighbouring categories.
+#   example        — either a "RETRO.md ### Deviation N" anchor for the
+#                    three categories with verified instances, or the
+#                    literal token "unverified-candidate" for the five
+#                    forward-looking categories (per REQ-4 default for
+#                    Open Question 1; see REQUIREMENTS.md).
+#   typical_phase  — canonical phase slug from
+#                    adapters/claude-code/claude/tools/lib/deviation-phase-slugs.sh
+#                    (e.g. ba, qa, static-analysis, implement, gate). Free-form
+#                    strings outside the slug map are permitted but discouraged.
+#
+# Authoring constraints (REQ-6 / EDGE-4): plain block style only — no YAML
+# anchors, aliases, merge keys, or tab indentation. ASCII preferred so
+# descriptions stay grep-and-edit reproducible.
+#
+# Adding a ninth category requires a coordinated three-file edit: this file,
+# core/schema/deviation-taxonomy.schema.json (extend "required" + properties),
+# and the deviation $def enum in core/schema/execution-plan.schema.json.
+
+integration_gap:
+  description: "A producer-side artifact ships (script, schema, skill, library) but no consumer ever invokes it, so the contract is documented but structurally inert. Distinct from gate_logic_drift in that the machinery is correct in isolation; only the wiring across components is missing."
+  example: "docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md ### Deviation 8 — deviation-tracker.py shipped in Phase 2 but never invoked by any consumer; 0/16 tasks have phase_results."
+  typical_phase: "implement"
+
+gate_logic_drift:
+  description: "A phase gate's checklist or shell predicate is logically wrong or trivially bypassable (whitespace bug, missing auto-checks, redundant timeout) so the gate signals pass or fail on the wrong condition. Distinct from error_reporting_tautology in that the gate verdict itself is mis-evaluated, not merely rendered with empty diagnostic text."
+  example: "docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md ### Deviation 1 — Phase 4 gate wc -l whitespace bug masked a real diff in the new-code coverage check."
+  typical_phase: "gate"
+
+error_reporting_tautology:
+  description: "A failure or anomaly is reported in a form that does not name the offending input — e.g. ERROR with no path, an empty list of violations, or a parser error message that does not quote the bad fragment. Operators cannot triage without re-running the tool with extra logging. Distinct from factual_error in that the report is technically true but operationally useless."
+  example: "docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md ### Deviation 3 — Finalize JSON rfind('{') parsing bug surfaced as an opaque parse failure instead of naming the malformed payload."
+  typical_phase: "static-analysis"
+
+factual_error:
+  description: "A claim, count, citation, or backlog reference that is objectively wrong — for example, a backlog item asserting a rate-limit is in place when no such limit exists in code. Distinct from error_reporting_tautology because the claim is false, not merely unhelpful; distinct from acceptance_reinterpretation because the falsehood is at the level of state, not requirement scope."
+  example: "unverified-candidate: per REQUIREMENTS.md Open Question 1 default (a), factual_error is grouped with the forward-looking categories. The empirically verified instance at RETRO.md Deviation 7 (Backlog #28.G rate-limit false claim) may be promoted to an anchor in a follow-up edit if the user prefers Option (b)."
+  typical_phase: "ba"
+
+test_tautology:
+  description: "A test asserts on a mock, a stub, or its own setup rather than on the production code path, so the test passes for reasons unrelated to the implementation under test. Distinct from integration_gap in that the test exists and runs; only its assertion is structurally self-referential."
+  example: "unverified-candidate: forward-looking category authored against plan DN-E. No verified instance in docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md at this time."
+  typical_phase: "qa"
+
+sycophancy:
+  description: "A producer phase reports 'all green' or 'looks good' without actually running the verification step or against criteria the submitted artifacts do not in fact meet. Distinct from factual_error because the misstatement is performative agreement, not a discrete factual claim about state."
+  example: "unverified-candidate: forward-looking category authored against plan DN-E. No verified instance in docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md at this time."
+  typical_phase: "review"
+
+acceptance_reinterpretation:
+  description: "A downstream phase silently reinterprets, narrows, or expands the scope of an acceptance criterion authored upstream — for example, treating a SHALL as a SHOULD or implementing a strict subset of an AC without flagging the deviation. Distinct from factual_error because the re-scoping concerns requirement intent, not the truth of a claim."
+  example: "unverified-candidate: forward-looking category authored against plan DN-E. No verified instance in docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md at this time."
+  typical_phase: "implement"
+
+architectural_change_without_anchor:
+  description: "Implementation introduces a new abstraction, layer, or dependency that is not justified by — or even referenced in — the upstream PLAN.md or REQUIREMENTS.md. Distinct from acceptance_reinterpretation because the deviation is structural (a new component) rather than scopal (a redefined criterion)."
+  example: "unverified-candidate: forward-looking category authored against plan DN-E. No verified instance in docs/DONE_Plan_zero-tech-debt-pipeline/RETRO.md at this time."
+  typical_phase: "implement"

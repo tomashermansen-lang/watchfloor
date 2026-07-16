@@ -1,0 +1,62 @@
+schema_version: 2.0.0
+name: parallel-modify-collision-fixture
+vision: Positive fixture — two parallel-eligible tasks share where.modify path; validator emits WARNING and exits 0.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator emits R-C1 parallelism WARNING for shared modify path
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Two pending tasks with no depends edge collide on a single modify path.
+    sequencing_rationale: walking-skeleton — exercises the per-phase disjointness check on parallel-eligible tasks
+    tasks:
+      - id: task-a
+        name: Task A — adds parser entry point
+        task_type: development
+        status: pending
+        what: Task A adds a new parser entry point in claude/tools/lib/foo.py and wires it into the orchestrator dispatch table for early validation.
+        why: Two tasks colliding on the same file create a merge-conflict generator if launched in parallel; the validator must surface this for operator decision before any worktree is spawned.
+        where:
+          modify:
+            - claude/tools/lib/foo.py
+        acceptance:
+          - When the validator runs, the system shall emit a WARNING naming task-a, task-b and the path.
+        prompt: task-a
+        estimate:
+          lines_estimate: 100
+          duration_hours: 1
+      - id: task-b
+        name: Task B — refactors error path
+        task_type: development
+        status: pending
+        what: Task B refactors the error-handling path in claude/tools/lib/foo.py so callers receive structured exceptions instead of stringly-typed sentinel return codes.
+        why: The collision with task-a is intentional in this fixture so the parallelism validator has a positive exemplar to fire on for end-to-end dispatcher coverage.
+        where:
+          modify:
+            - claude/tools/lib/foo.py
+        acceptance:
+          - When the validator runs, the system shall emit a WARNING naming task-b, task-a and the colliding path.
+        prompt: task-b
+        estimate:
+          lines_estimate: 100
+          duration_hours: 1

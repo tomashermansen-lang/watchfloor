@@ -1,0 +1,44 @@
+schema_version: 2.0.0
+name: missing-what-fixture
+vision: Negative fixture exercising R10 — missing required task.what triggers exit 1.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 with task.<id>.what required when what is empty
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage.
+    sequencing_rationale: Negative-only fixture; no real sequencing to articulate beyond completeness.
+    tasks:
+      - id: bad-task
+        name: Bad task
+        task_type: development
+        status: pending
+        what: ""
+        why: This task intentionally has empty what to trigger the completeness validator and exercise the R10 path-pointing error format.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When validate-plan.py runs, the system shall exit 1.
+        prompt: bad

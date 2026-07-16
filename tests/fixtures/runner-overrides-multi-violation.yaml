@@ -1,0 +1,126 @@
+schema_version: 2.0.0
+name: runner-overrides-multi-violation
+vision: A two-phase plan with three malformed runner blocks across three tasks. Drives the AS13/R30 deterministic-ordering assertion for the semantic validator.
+users:
+  - tests/test_validate_plan_runner.py asserting deterministic ordering of operator-facing diagnostics
+success_criteria:
+  - id: SC-1
+    description: validate-plan.py emits the three semantic diagnostics in the deterministic R30 order — phase index ascending, task index ascending, violation type ascending.
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - validate-plan.py R30 deterministic ordering with multiple violations across phases
+  out_of_scope:
+    - runtime chain behaviour
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse:
+  - adapters/claude-code/claude/tools/validate-plan.py
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope: []
+kill_criteria:
+  - id: KC-1
+    description: validate-plan.py emits diagnostics in non-deterministic order on the same fixture across runs
+design_notes:
+  - id: DN-1
+    note: two phases × three tasks lets the test pin both intra-phase and inter-phase ordering
+risks:
+  - id: RSK-1
+    description: validator implementation introduces a hash-table iteration that drops the sort key
+    severity: low
+phases:
+  - id: phase-a
+    name: Phase A
+    overview_summary: First phase containing two violating tasks task-x (bad env key) and task-y (bad flags item).
+    sequencing_rationale: smallest-first — pending tasks in this phase exercise the violator path within a single phase.
+    tasks:
+      - id: task-x
+        name: Task X with lowercase env key
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Phase-A task with lowercase env key lowercase_var — its diagnostic must surface first in stdout to prove intra-phase sort order works.
+        why: Anchors R30 sort tuple position (0,0,0,...). Confirms intra-phase ordering — the diagnostic for this task surfaces FIRST in stdout, before any phase-A flags-item finding.
+        where:
+          modify:
+            - tests/fake/task-x.txt
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against this fixture, the task-x semantic diagnostic shall appear before the task-y diagnostic in stdout.
+        prompt: No-op stub for the validator test exercising deterministic ordering position 0.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            lowercase_var: '1'
+      - id: task-y
+        name: Task Y with non-string flags item
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Phase-A task carrying integer 42 inside runner.flags[1] — its diagnostic surfaces between the env-key and the cross-phase findings.
+        why: Anchors R30 sort tuple position (0,1,2,...). Confirms violation-type ordering — env-key findings precede flags-item findings on the same task position.
+        where:
+          modify:
+            - tests/fake/task-y.txt
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against this fixture, the task-y semantic diagnostic shall appear between task-x and task-z diagnostics in stdout.
+        prompt: No-op stub for the validator test exercising deterministic ordering position 1.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - --stop-after-phase
+            - 42
+  - id: phase-b
+    name: Phase B
+    overview_summary: Second phase containing one violating task task-z (bad mixedCase env key).
+    sequencing_rationale: smallest-first — single pending task in this phase exercises the inter-phase ordering invariant.
+    tasks:
+      - id: task-z
+        name: Task Z with mixedCase env key
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Phase-B task carrying a mixedCase env key mixedCaseVar — its diagnostic must surface third in stdout to prove inter-phase sort order works.
+        why: Anchors R30 sort tuple position (1,0,0,...). Confirms inter-phase ordering — the diagnostic for this task surfaces THIRD in stdout, after every phase-A diagnostic.
+        where:
+          modify:
+            - tests/fake/task-z.txt
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against this fixture, the task-z semantic diagnostic shall appear after task-x and task-y diagnostics in stdout.
+        prompt: No-op stub for the validator test exercising deterministic ordering position 2.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            mixedCaseVar: '1'

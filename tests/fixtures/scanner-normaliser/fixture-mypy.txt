@@ -1,0 +1,5 @@
+src/foo.py:10: error: Incompatible return type  [return-value]
+src/foo.py:25: note: See class definition  [note-ref]
+src/bar.py:5: error: Some error message
+src/bar.py:15: warning: Unused variable  [unused-var]
+Found 2 errors in 2 files (checked 3 source files)

@@ -1,0 +1,9 @@
+schema_version: "1.0.0"
+name: Simple test plan
+phases:
+  - id: phase-1
+    name: Phase 1
+    tasks:
+      - id: task-1
+        name: Task 1
+        status: wip

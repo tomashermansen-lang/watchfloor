@@ -1,0 +1,32 @@
+[
+  {
+    "id": "ruff:E501-foo.py-abcd1234",
+    "tool": "ruff",
+    "rule": "E501",
+    "file": "src/foo.py",
+    "line": 10,
+    "severity": "error",
+    "message": "Line too long (120 > 88)",
+    "content_hash": "abcd1234"
+  },
+  {
+    "id": "ruff:F401-foo.py-beef5678",
+    "tool": "ruff",
+    "rule": "F401",
+    "file": "src/foo.py",
+    "line": 3,
+    "severity": "error",
+    "message": "`os` imported but unused",
+    "content_hash": "beef5678"
+  },
+  {
+    "id": "shellcheck:SC2086-run.sh-dead9012",
+    "tool": "shellcheck",
+    "rule": "SC2086",
+    "file": "scripts/run.sh",
+    "line": 15,
+    "severity": "warning",
+    "message": "Double quote to prevent globbing and word splitting",
+    "content_hash": "dead9012"
+  }
+]

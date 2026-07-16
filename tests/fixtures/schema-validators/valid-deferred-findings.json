@@ -1,0 +1,23 @@
+[
+  {
+    "finding_id": "shellcheck:SC2086-auth-a3f2c8d1",
+    "rule": "SC2086",
+    "file": "claude/tools/auth.sh",
+    "line": 42,
+    "state": "WontFix",
+    "reason": "Variable is always a single word in this context and quoting would break the glob expansion that follows",
+    "owner": "pipeline",
+    "reviewed_at": "2026-04-17"
+  },
+  {
+    "finding_id": "shellcheck:SC2155-deploy-b4e7d902",
+    "rule": "SC2155",
+    "file": "claude/tools/deploy.sh",
+    "line": 10,
+    "state": "Deferred",
+    "reason": "Splitting declaration and assignment would require restructuring the entire function which is scheduled for Phase 3",
+    "owner": "pipeline",
+    "reviewed_at": "2026-04-17",
+    "ticket": "PIPE-123"
+  }
+]

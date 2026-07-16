@@ -1,0 +1,11 @@
+schema_version: 1.4.0
+name: legacy-fallback
+description: Legacy 1.x plan exercising the heading-match fallback path of the plan-detection skill.
+phases:
+  - id: phase-1
+    name: Phase 1
+    tasks:
+      - id: t1
+        name: First legacy task
+        status: done
+        depends: []

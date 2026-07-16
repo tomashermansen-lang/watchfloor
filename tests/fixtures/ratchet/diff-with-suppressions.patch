@@ -1,0 +1,27 @@
+diff --git a/src/main.py b/src/main.py
+index 1111111..2222222 100644
+--- a/src/main.py
++++ b/src/main.py
+@@ -1,4 +1,12 @@
+ import os
++import sys  # noqa: F401
++x: int = "hello"  # type: ignore
++msg = "use # noqa to suppress"
++noqa_count = 0
++y = 1  # noqa  # type: ignore
+
+ def main():
+     pass
++    # noqa — disable all
+diff --git a/src/app.ts b/src/app.ts
+index 3333333..4444444 100644
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -1,3 +1,8 @@
+ const x = 1;
++// eslint-disable-next-line no-unused-vars
++const y = 2;
++// @ts-ignore
++/* eslint-disable */
++/* istanbul ignore next */
+ export default x;

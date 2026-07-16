@@ -1,0 +1,2 @@
+{"type":"system","subtype":"init","session_id":"7ed5dd25-1111-2222-3333-444444444444"}
+{"type":"result","subtype":"success","is_error":true,"result":"Not logged in","num_turns":1,"total_cost_usd":0,"session_id":"7ed5dd25-1111-2222-3333-444444444444"}

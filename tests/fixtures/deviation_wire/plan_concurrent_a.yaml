@@ -1,0 +1,12 @@
+schema_version: "1.0.0"
+name: Plan for concurrent writes
+phases:
+  - id: phase-1
+    name: Phase 1
+    tasks:
+      - id: task-a
+        name: Task A
+        status: wip
+      - id: task-b
+        name: Task B
+        status: wip

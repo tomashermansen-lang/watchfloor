@@ -1,0 +1,4 @@
+{"ts":"2026-04-17T10:00:00Z","batch":"001","event":"started"}
+{"ts":"2026-04
+{"ts":"2026-04-17T10:10:00Z","batch":"002","event":"started"}
+{"ts":"2026-04-17T10:15:00Z","batch":"002","event":"completed","files_fixed":1}

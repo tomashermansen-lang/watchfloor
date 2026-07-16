@@ -1,0 +1,31 @@
+created_at: "2026-04-17T10:00:00Z"
+git_sha_at_start: "abc1234"
+estimated_batches: 4
+estimated_hours: 2.0
+staleness_commit_threshold: 1
+project: "test-project"
+passes:
+  - id: "pass-1"
+    kind: "mechanical"
+    batches:
+      - id: "batch-1"
+        files: ["src/a.py", "src/b.py"]
+        estimated_turns: 5
+        status: "pending"
+      - id: "batch-2"
+        files: ["src/c.py"]
+        estimated_turns: 3
+        status: "pending"
+        depends_on: ["batch-1"]
+  - id: "pass-2"
+    kind: "coverage"
+    batches:
+      - id: "batch-3"
+        files: ["src/d.py", "src/e.py"]
+        estimated_turns: 8
+        status: "pending"
+      - id: "batch-4"
+        files: ["src/f.py"]
+        estimated_turns: 4
+        status: "pending"
+        depends_on: ["batch-3"]

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "grinder-state.schema.json",
+  "$comment": "Defines the grinder orchestrator's progress-tracking file (grinder-state.json). The current_pass and current_batch fields reference pass/batch IDs from grinder-plan.schema.json — cross-file reference validity is enforced by the orchestrator at runtime, not by this schema.",
+  "type": "object",
+  "required": ["current_pass", "started_at", "last_updated", "git_sha_at_start"],
+  "additionalProperties": false,
+  "properties": {
+    "current_pass": {
+      "type": "string",
+      "minLength": 1
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "git_sha_at_start": {
+      "type": "string",
+      "minLength": 1
+    },
+    "current_batch": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "batches_completed": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "batches_failed": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "batches_pending": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "batches_deferred": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "paused": {
+      "type": "boolean",
+      "default": false
+    },
+    "staleness_commit_threshold": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    }
+  }
+}

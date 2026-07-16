@@ -1,0 +1,375 @@
+schema_version: 2.0.0
+name: runner-overrides-fixture
+vision: A multi-task plan exercising the chain runner-overrides happy-path contract. Used only by tests/test_chain_runner_overrides.sh — no production execution.
+users:
+  - tests/test_chain_runner_overrides.sh driving autopilot-chain.sh against a stubbed AUTOPILOT_CMD
+success_criteria:
+  - id: SC-1
+    description: chain forwards runner.env + runner.flags from each task verbatim to the spawned autopilot.sh subprocess
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - chain runner-overrides happy path
+    - chain zero-regression for tasks without runner config
+  out_of_scope:
+    - real autopilot.sh invocation
+    - real claude -p invocation
+tech_stack:
+  - bash 3.2
+  - python3
+existing_infrastructure_to_reuse:
+  - adapters/claude-code/claude/tools/autopilot-chain.sh
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope:
+    - SonarQube provisioning
+kill_criteria:
+  - id: KC-1
+    description: chain leaks runner.env into the next task or its own shell
+design_notes:
+  - id: DN-1
+    note: each task has its own where.modify file so parallelism warnings stay quiet, and the chain test drives them with --max-parallel 1 for deterministic ordering anyway
+risks:
+  - id: RSK-1
+    description: fixture drift if schema 2.0 required fields change
+    severity: low
+phases:
+  - id: harness
+    name: Harness
+    overview_summary: Multi-task fixture for chain-side runner-overrides tests covering happy path, zero-regression, and edge cases.
+    sequencing_rationale: smallest-first — pending tasks with no depends arrow let the chain test drive them serially and inspect per-task argv + env recordings.
+    tasks:
+      - id: task-no-runner
+        name: Task no runner
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task with NO runner field — drives the zero-regression chain launch contract where the chain invokes autopilot.sh with only --full --pipeline light task_id.
+        why: Anchors the byte-identical pre-feature contract; without this baseline the test cannot diff the runner-bearing launches against an unchanged launch and verify R6 zero regression.
+        where:
+          modify:
+            - tests/fake/task-no-runner.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-no-runner, the recorded argv shall be exactly --full --pipeline light task-no-runner.
+        prompt: No-op stub for the chain test exercising the no-runner baseline.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+      - id: task-empty-runner
+        name: Task with empty runner block
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner empty-map — drives the assertion that an empty runner block is byte-identical to absent on the chain launch.
+        why: Anchors R7 (empty runner is zero-regression). Without this assertion the chain might emit an empty env prefix that yields different argv shape compared with the no-runner baseline.
+        where:
+          modify:
+            - tests/fake/task-empty-runner.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-empty-runner, the recorded argv shall be byte-identical to the no-runner reference.
+        prompt: No-op stub for the chain test exercising the empty-runner case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner: {}
+      - id: task-empty-inner
+        name: Task with empty inner runner maps
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner with explicit empty env and empty flags — drives the assertion that inner empties are zero-regression to absent.
+        why: Anchors R7 (empty inner maps are zero-regression). Closes a gap that empty-map could be treated differently from missing-map by the chain's runner injector logic.
+        where:
+          modify:
+            - tests/fake/task-empty-inner.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-empty-inner, the recorded argv shall be byte-identical to the no-runner reference.
+        prompt: No-op stub for the chain test exercising the empty-inner case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env: {}
+          flags: []
+      - id: task-flags-only
+        name: Task with runner.flags only
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner.flags but no runner.env — drives flag append (R2) and composition with chain-level --stop-after-phase (AS11).
+        why: Anchors R2 flag append shape. Composes with the chain-level --stop-after-phase test (AS11) to verify last-wins ordering when both chain and runner declare the same flag.
+        where:
+          modify:
+            - tests/fake/task-flags-only.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-flags-only, the recorded argv shall contain --stop-after-phase ba between chain-level flags and the trailing task id.
+        prompt: No-op stub for the chain test exercising the flags-only case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - --stop-after-phase
+            - ba
+      - id: task-env-only
+        name: Task with runner.env only
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner.env but no runner.flags — drives subprocess-scoped env injection without leaking into the chain's own shell environment.
+        why: Anchors R3 env export and R4 subprocess scoping. Critical for the dual-canary pattern where only the local-LLM-routed canary sets LOCAL_LLM_ROUTING but the baseline does not.
+        where:
+          modify:
+            - tests/fake/task-env-only.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-env-only, the recorded env capture shall contain LOCAL_LLM_ROUTING=1 and LOCAL_LLM_PHASES=ba,plan.
+        prompt: No-op stub for the chain test exercising the env-only case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            LOCAL_LLM_ROUTING: '1'
+            LOCAL_LLM_PHASES: 'ba,plan'
+      - id: task-env-and-flags
+        name: Task with both runner.env and runner.flags
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying both runner.env and runner.flags — the critical wiring test proving Component A reads both and Component B applies both.
+        why: Critical wiring test — proves Component A reads both shapes and Component B applies both at the same launch site without dropping either half. AS3 is the prime end-to-end check.
+        where:
+          modify:
+            - tests/fake/task-env-and-flags.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-env-and-flags, both env and flags shall appear in the recordings.
+        prompt: No-op stub for the chain test exercising the env-and-flags case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            LOCAL_LLM_ROUTING: '1'
+            LOCAL_LLM_PHASES: 'ba'
+          flags:
+            - --stop-after-phase
+            - ba
+      - id: task-env-override
+        name: Task whose runner.env value overrides parent shell env
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task whose runner.env contains a key that ALSO exists in the parent shell, exercising override semantics on the spawned subprocess.
+        why: Anchors R5 — runner.env always wins over the inherited parent shell value. Documented because local-llm-routed canary tasks rely on it to override a default-Anthropic parent shell.
+        where:
+          modify:
+            - tests/fake/task-env-override.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain runs with LOCAL_LLM_ROUTING=parent-value exported, the recorded env for task-env-override shall be LOCAL_LLM_ROUTING=override-value.
+        prompt: No-op stub for the chain test exercising the override case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            LOCAL_LLM_ROUTING: override-value
+      - id: task-shell-meta
+        name: Task with shell metacharacter env values
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying nasty env values (shell meta, empty, embedded backslash-n) — drives the verbatim-passthrough contract for runner.env values.
+        why: Anchors R3 verbatim-passthrough — proves the chain's env-prefix array does not evaluate command substitutions or interpret backslash escapes in YAML scalar values.
+        where:
+          modify:
+            - tests/fake/task-shell-meta.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-shell-meta, the recorded env capture shall contain SHELL_META_VALUE verbatim and the guard file shall not have been created.
+        prompt: No-op stub for the chain test exercising the shell-meta case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            SHELL_META_VALUE: 'a;b|c$(touch /tmp/runner-attack-FILE)`e`'
+            EMPTY_VAR: ''
+            MULTILINE_VAR: 'a\nb'
+      - id: task-overlapping-a
+        name: Task A with VAR=a
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task with runner.env.VAR=a — exercises subprocess scoping when two tasks share a key with different values (T-EC13).
+        why: With task-overlapping-b, proves R4 isolation. Two consecutive tasks with disjoint VAR values must each see only their own subset on the spawned autopilot subprocess.
+        where:
+          modify:
+            - tests/fake/task-overlapping-a.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-overlapping-a, the recorded env shall contain VAR=a and not VAR=b.
+        prompt: No-op stub for the chain test exercising the overlapping-a case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            VAR: a
+      - id: task-overlapping-b
+        name: Task B with VAR=b
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task with runner.env.VAR=b — sibling of task-overlapping-a exercising subprocess scoping on overlapping keys.
+        why: Proves R4 isolation when two tasks share a key with different values. The chain's env-prefix array must scope every K=V to the spawned subprocess and never re-export.
+        where:
+          modify:
+            - tests/fake/task-overlapping-b.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-overlapping-b, the recorded env shall contain VAR=b and not VAR=a.
+        prompt: No-op stub for the chain test exercising the overlapping-b case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            VAR: b
+      - id: task-log-counts
+        name: Task with three env vars and two flags for log-count assertion
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task with three env entries + two flags — drives the R29 counts-only log assertion to verify values never leak to stderr.
+        why: Counts-only logging avoids leaking secrets via runner.env. The test asserts both presence of the count line and absence of value-leaks in the operator-facing audit trail.
+        where:
+          modify:
+            - tests/fake/task-log-counts.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-log-counts, stderr shall include the literal text Runner overrides for task-log-counts env=3 flags=2.
+        prompt: No-op stub for the chain test exercising the log-counts case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          env:
+            A: '1'
+            B: '2'
+            C: '3'
+          flags:
+            - --x
+            - --y
+      - id: task-spaced-flag
+        name: Task with a runner.flags value containing spaces
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task with a flag containing literal spaces — drives whitespace preservation within a single argv element (T-EC4).
+        why: Anchors the array-element-atomicity property of bash arrays. The chain's runner.flags loop must produce one argv token per array entry, never word-splitting inner whitespace.
+        where:
+          modify:
+            - tests/fake/task-spaced-flag.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-spaced-flag, the recorded argv shall include the literal token "my label with spaces" as a single element.
+        prompt: No-op stub for the chain test exercising the spaced-flag case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - --label
+            - my label with spaces
+      - id: task-noval-flag
+        name: Task with a no-value flag in runner.flags
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner.flags --full only — drives the forward-verbatim contract for no-value flags without arity validation.
+        why: Anchors the chain's "forward verbatim" contract — chain does NOT validate flag arity or interpret values. autopilot.sh's own arg parser is the downstream authority.
+        where:
+          modify:
+            - tests/fake/task-noval-flag.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-noval-flag, the recorded argv shall contain --full between chain-level flags and the trailing task id.
+        prompt: No-op stub for the chain test exercising the noval-flag case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - --full
+      - id: task-empty-flag
+        name: Task with an empty-string flag
+        task_type: development
+        status: pending
+        autopilot: true
+        pipeline: light
+        what: Stub task carrying runner.flags with a single empty-string entry — exercises the chain loop discipline with empty entries.
+        why: Anchors the chain's loop discipline — IFS read with empty entries does not silently drop them. The chain must forward the empty string as a single positional argv token.
+        where:
+          modify:
+            - tests/fake/task-empty-flag.txt
+          create: []
+          delete: []
+        acceptance:
+          - When the chain launches task-empty-flag, the recorded argv shall include an empty positional between chain-level flags and the trailing task id.
+        prompt: No-op stub for the chain test exercising the empty-flag case.
+        estimate:
+          lines_estimate: 1
+          duration_hours: 0
+        runner:
+          flags:
+            - ''

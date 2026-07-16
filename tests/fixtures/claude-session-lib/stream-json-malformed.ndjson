@@ -1,0 +1,4 @@
+{this is not valid json
+{"type":"assistant","message":{"content":[{"type":"text","text":"Valid line after malformed."}]}}
+{truncated
+{"type":"result","subtype":"success","total_cost_usd":0.10,"duration_ms":5000,"num_turns":1}

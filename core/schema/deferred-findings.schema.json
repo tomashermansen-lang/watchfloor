@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deferred-findings.schema.json",
+  "$comment": "Defines the structural contract for deferred-findings.json — an auditable list of findings the pipeline has agreed not to fix. Content-hash computation algorithm: (1) Read the source file at the finding's current line number. (2) Extract a 5-line window: 2 lines above, the finding line, 2 lines below. (3) If the finding is near the top or bottom of the file, use as many lines as available (window may be 3-5 lines for edge positions; a 1-line file yields a 1-line window). (4) Concatenate the window lines with newlines. (5) Compute SHA-256 of the concatenated string (UTF-8 encoded). (6) Take the first 8 hex characters of the digest. This specification is the authoritative reference — downstream implementers (scanner-normaliser Phase 2, ratchet Phase 5, /retro Phase 6) MUST reference this $comment, not re-specify the algorithm. Validation boundary: this schema enforces structural correctness (field types, enums, regex, minLength). Semantic checks enforced by validate-plan.py --schema (Phase 1, schema-validators task): (a) uniqueness of finding_id across entries, (b) template-pattern detection in reason field (rejecting 'Pre-existing', 'Legacy code', etc.), (c) Deferred state requiring a ticket field (conditional requirement).",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/finding_entry"
+  },
+  "$defs": {
+    "finding_entry": {
+      "type": "object",
+      "required": [
+        "finding_id",
+        "rule",
+        "file",
+        "line",
+        "state",
+        "reason",
+        "owner",
+        "reviewed_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+:[A-Z0-9]+-[^-]+-[a-f0-9]{8}$"
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": ["WontFix", "FalsePositive", "Deferred", "Accepted"]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 40
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "review_trigger": {
+          "type": "string"
+        },
+        "ticket": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

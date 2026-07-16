@@ -1,0 +1,50 @@
+[
+  {
+    "filePath": "/home/user/project/src/app.ts",
+    "messages": [
+      {
+        "ruleId": "no-unused-vars",
+        "severity": 2,
+        "message": "'foo' is defined but never used.",
+        "line": 5,
+        "column": 7
+      },
+      {
+        "ruleId": null,
+        "severity": 2,
+        "message": "Parsing error: Unexpected token",
+        "line": 0,
+        "column": 1
+      }
+    ],
+    "errorCount": 2,
+    "warningCount": 0
+  },
+  {
+    "filePath": "/home/user/project/src/utils.ts",
+    "messages": [
+      {
+        "ruleId": "semi",
+        "severity": 1,
+        "message": "Missing semicolon.",
+        "line": 12,
+        "column": 25
+      },
+      {
+        "ruleId": "no-console",
+        "severity": 1,
+        "message": "Unexpected console statement.",
+        "line": 8,
+        "column": 1
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 2
+  },
+  {
+    "filePath": "/home/user/project/src/empty.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0
+  }
+]

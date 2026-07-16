@@ -1,0 +1,12 @@
+[
+  {
+    "finding_id": "ruff:E501-foo.py-abcd1234",
+    "state": "WontFix",
+    "reason": "First entry"
+  },
+  {
+    "finding_id": "ruff:E501-foo.py-abcd1234",
+    "state": "Deferred",
+    "reason": "Duplicate entry"
+  }
+]

@@ -1,0 +1,26 @@
+schema_version: 2.0.0
+name: hermetic-demo-plan
+vision: Synthetic in-progress plan for harness coverage.
+users:
+  - test harness
+success_criteria:
+  - id: SC-A
+    description: Discovered by /api/plans deterministically.
+    measurable_via: test
+    verified_at_phase: discovery
+scope:
+  in_scope:
+    - plan discovery via docs/ scan
+  out_of_scope:
+    - production behaviour
+phases:
+  - id: phase-one
+    name: Phase one
+    tasks:
+      - id: demo-task
+        name: Demo task
+        status: pending
+        depends: []
+        prompt: noop
+        acceptance:
+          - When discovered, then surfaced under inprogress lifecycle.

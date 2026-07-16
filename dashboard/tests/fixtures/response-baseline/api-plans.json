@@ -1,0 +1,10 @@
+{
+  "slug": "api-plans",
+  "method": "GET",
+  "path": "/api/plans",
+  "query": "",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "[{\"project\": \"hermetic-demo-plan\", \"path\": \"__HERMETIC_HOME__\", \"plan_dir\": \"__HERMETIC_HOME__/docs/INPROGRESS_Plan_demo\", \"lifecycle\": \"inprogress\", \"phases\": 1, \"progress\": 0, \"has_plan\": true, \"schema_version\": \"2.0.0\", \"active_session_count\": 0, \"last_activity\": \"2024-01-01T00:00:00+00:00\"}]"
+}

@@ -1,0 +1,44 @@
+schema_version: 2.0.0
+name: glob-where-fixture
+vision: Negative fixture — task.where.modify contains a glob pattern, triggering R17 glob rejection.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 with glob pattern not allowed
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage.
+    sequencing_rationale: Glob characters in where[] indicate a producer that did not commit to specific files; this is the drift-coverage failure mode the validator must catch.
+    tasks:
+      - id: glob-task
+        name: Glob task
+        task_type: development
+        status: pending
+        what: This task is sufficiently long but its where.modify entry contains a glob pattern which the R17 pattern rule rejects in favor of exact paths.
+        why: Producers must commit to specific files in where.modify so that drift coverage and downstream tooling can compare declared vs actual diffs deterministically.
+        where:
+          modify:
+            - "claude/**"
+        acceptance:
+          - When validate-plan.py runs, the system shall exit 1 with a glob pattern not allowed error.
+        prompt: glob

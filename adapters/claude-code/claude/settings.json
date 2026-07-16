@@ -1,0 +1,401 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebSearch"
+    ],
+    "deny": [
+      "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)",
+      "Read(~/.ssh/**)",
+      "Edit(~/.aws/**)",
+      "Write(~/.aws/**)",
+      "Read(~/.aws/**)",
+      "Edit(~/.gnupg/**)",
+      "Write(~/.gnupg/**)",
+      "Read(~/.gnupg/**)",
+      "Edit(~/.azure/**)",
+      "Write(~/.azure/**)",
+      "Read(~/.azure/**)",
+      "Edit(~/.kube/**)",
+      "Write(~/.kube/**)",
+      "Read(~/.kube/**)",
+      "Edit(~/.npmrc)",
+      "Write(~/.npmrc)",
+      "Read(~/.npmrc)",
+      "Edit(~/.pypirc)",
+      "Write(~/.pypirc)",
+      "Read(~/.pypirc)",
+      "Edit(~/.git-credentials)",
+      "Write(~/.git-credentials)",
+      "Read(~/.git-credentials)",
+      "Edit(~/.netrc)",
+      "Write(~/.netrc)",
+      "Read(~/.netrc)",
+      "Edit(~/.bashrc)",
+      "Write(~/.bashrc)",
+      "Edit(~/.zshrc)",
+      "Write(~/.zshrc)",
+      "Edit(~/.claude/settings.json)",
+      "Write(~/.claude/settings.json)",
+      "Edit(~/.claude/hooks/**)",
+      "Write(~/.claude/hooks/**)",
+      "Edit(~/.claude/agents/**)",
+      "Write(~/.claude/agents/**)",
+      "Edit(~/.claude/commands/**)",
+      "Write(~/.claude/commands/**)",
+      "Edit(~/.claude/skills/**)",
+      "Write(~/.claude/skills/**)",
+      "Edit(~/.claude/rules/**)",
+      "Write(~/.claude/rules/**)",
+      "Edit(~/.claude/CLAUDE.md)",
+      "Write(~/.claude/CLAUDE.md)",
+      "Read(~/Library/Cookies/**)",
+      "Read(~/Library/Application Support/Google/Chrome/**)",
+      "Read(~/Library/Application Support/Firefox/**)",
+      "Read(~/Library/Application Support/BraveSoftware/**)",
+      "Read(~/Library/Application Support/1Password/**)",
+      "Read(~/Library/Group Containers/2BUA8C4S2C.com.1password/**)",
+      "Read(~/Library/Application Support/Bitwarden/**)",
+      "Read(~/Library/Mail/**)",
+      "Read(~/Library/Messages/**)",
+      "Read(~/Library/Group Containers/group.com.apple.messages/**)",
+      "Read(~/Library/Application Support/Slack/**)",
+      "Read(~/Library/Application Support/Signal/**)",
+      "Read(~/Library/Mobile Documents/**)",
+      "Read(~/Library/CloudStorage/**)",
+      "Read(~/Documents/**)",
+      "Read(~/Desktop/**)",
+      "Read(~/Pictures/**)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "SONAR_TOKEN": "sqa_0c6a69b88b1756e4f49403db6146be33e80e74b0",
+    "PLAN_OWNERSHIP_GUARD_MODE": "warn"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/notify-macos.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash -c '[ -x ./scripts/verify_before_done.sh ] && ./scripts/verify_before_done.sh || true'"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/phase-artifact-stop-guard.sh"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash -c '[ -x ./scripts/verify_before_done.sh ] && ./scripts/verify_before_done.sh || true'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/edit-write-allowlist.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/plan-ownership-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/plan-ownership-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/tdd-gate.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/lint-on-edit.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/log-bash.sh",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/classify-bash-result.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p \"${TMPDIR:-/tmp/claude}\" 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/Projekter/dotfiles/dashboard/hooks/report-status.sh",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/log-permissions.sh",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "*.githubusercontent.com",
+        "objects.githubusercontent.com",
+        "uploads.github.com",
+        "registry.npmjs.org",
+        "*.pypi.org",
+        "pypi.org",
+        "api.anthropic.com",
+        "api.openai.com",
+        "*.googleapis.com",
+        "*.jobindex.dk",
+        "*.linkedin.com"
+      ],
+      "allowLocalBinding": true
+    },
+    "excludedCommands": [],
+    "filesystem": {
+      "allowWrite": [
+        "~/Projekter",
+        "//tmp",
+        "~/.cache",
+        "~/.docker"
+      ],
+      "denyRead": [
+        "~/.ssh",
+        "~/.aws",
+        "~/.gnupg",
+        "~/.azure",
+        "~/.kube",
+        "~/.npmrc",
+        "~/.pypirc",
+        "~/.git-credentials",
+        "~/.netrc",
+        "~/.bash_history",
+        "~/.zsh_history",
+        "~/Library/Keychains",
+        "~/Library/Cookies",
+        "~/Library/Application Support/Google/Chrome",
+        "~/Library/Application Support/Chromium",
+        "~/Library/Application Support/Firefox",
+        "~/Library/Application Support/BraveSoftware",
+        "~/Library/Application Support/Microsoft Edge",
+        "~/Library/Application Support/Vivaldi",
+        "~/Library/Application Support/Arc",
+        "~/Library/Containers/com.apple.Safari",
+        "~/Library/Mail",
+        "~/Library/Containers/com.apple.mail",
+        "~/Library/Group Containers/group.com.apple.mail",
+        "~/Library/Application Support/Microsoft Outlook",
+        "~/Library/Application Support/Spark",
+        "~/Library/Application Support/Airmail",
+        "~/Library/Messages",
+        "~/Library/Group Containers/group.com.apple.messages",
+        "~/Library/Application Support/Slack",
+        "~/Library/Containers/com.tinyspeck.slackmacgap",
+        "~/Library/Application Support/Signal",
+        "~/Library/Group Containers/group.com.signal.signal-desktop",
+        "~/Library/Application Support/Discord",
+        "~/Library/Containers/com.hnc.Discord",
+        "~/Library/Application Support/Telegram Desktop",
+        "~/Library/Containers/ru.keepcoder.Telegram",
+        "~/Library/Application Support/WhatsApp",
+        "~/Library/Containers/net.whatsapp.WhatsApp",
+        "~/Library/Application Support/1Password",
+        "~/Library/Group Containers/2BUA8C4S2C.com.1password",
+        "~/Library/Application Support/Bitwarden",
+        "~/Library/Containers/com.bitwarden.desktop",
+        "~/Library/Application Support/com.lastpass.LastPass",
+        "~/Library/Mobile Documents",
+        "~/Library/CloudStorage",
+        "~/Library/Application Support/Dropbox",
+        "~/Library/Containers/com.dropbox.Dropbox",
+        "~/Library/Group Containers/group.com.apple.notes",
+        "~/Library/Containers/com.apple.Notes",
+        "~/Library/Application Support/Notion",
+        "~/Library/Application Support/obsidian",
+        "~/Library/Application Support/Bear",
+        "~/Library/Group Containers/9K33E3U3T4.net.shinyfrog.bear",
+        "~/Library/Calendars",
+        "~/Library/Application Support/AddressBook",
+        "~/Library/Application Support/CallHistoryDB",
+        "~/Documents",
+        "~/Desktop",
+        "~/Pictures",
+        "~/Movies",
+        "~/Music",
+        "~/Downloads"
+      ]
+    }
+  },
+  "autoUpdatesChannel": "latest",
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "effortLevel": "max"
+}

@@ -1,0 +1,49 @@
+schema_version: 2.0.0
+name: dangling-ref-fixture
+vision: Negative fixture — phase.kill_criteria_refs references undefined KC-Z, triggering R19 cross-reference error.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 when a _refs entry does not resolve
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria:
+  - id: KC-A
+    description: schema rejects valid plan
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage.
+    sequencing_rationale: Dangling references break agentic navigation; the validator must catch them before plan-detection traverses the graph.
+    kill_criteria_refs:
+      - KC-A
+      - KC-Z
+    tasks:
+      - id: ref-task
+        name: Ref task
+        task_type: development
+        status: pending
+        what: This task is sufficiently long but its parent phase references KC-Z which is not defined in project.kill_criteria triggering R19.
+        why: Cross-reference resolution is the agentic navigability contract; downstream agents that follow _refs entries cannot recover from dangling pointers.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When validate-plan.py runs, the system shall exit 1 with a dangling reference error.
+        prompt: ref

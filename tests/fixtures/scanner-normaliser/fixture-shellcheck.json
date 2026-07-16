@@ -1,0 +1,44 @@
+[
+  {
+    "file": "scripts/deploy.sh",
+    "line": 15,
+    "endLine": 15,
+    "column": 5,
+    "endColumn": 20,
+    "level": "error",
+    "code": 2086,
+    "message": "Double quote to prevent globbing and word splitting.",
+    "fix": null
+  },
+  {
+    "file": "scripts/deploy.sh",
+    "line": 22,
+    "endLine": 22,
+    "column": 1,
+    "endColumn": 10,
+    "level": "warning",
+    "code": 2034,
+    "message": "VAR appears unused. Verify use (or export).",
+    "fix": {"replacements": []}
+  },
+  {
+    "file": "scripts/build.sh",
+    "line": 8,
+    "endLine": 8,
+    "column": 1,
+    "endColumn": 5,
+    "level": "info",
+    "code": 2148,
+    "message": "Tips depend on target shell and target OS."
+  },
+  {
+    "file": "scripts/build.sh",
+    "line": 3,
+    "endLine": 3,
+    "column": 1,
+    "endColumn": 5,
+    "level": "style",
+    "code": 2196,
+    "message": "Escape sequences in single quotes won't expand."
+  }
+]

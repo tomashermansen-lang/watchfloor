@@ -1,0 +1,45 @@
+schema_version: 2.0.0
+name: empty-where-fixture
+vision: Negative fixture — pending task with all three where[] arrays empty triggers R17 empty-where error.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 when pending task has no where path
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage.
+    sequencing_rationale: A pending task with no where[] entry cannot be implemented; the validator must reject it before it propagates downstream.
+    tasks:
+      - id: empty-task
+        name: Empty where
+        task_type: development
+        status: pending
+        what: This task is sufficiently long but its where modify create and delete arrays are all empty which the R17 rule rejects for pending tasks.
+        why: A pending task must declare at least one path in where.modify create or delete so the planner has committed to where the work lands; empty where blocks are a producer-quality smell.
+        where:
+          modify: []
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs, the system shall exit 1 with an empty-where error.
+        prompt: empty

@@ -1,0 +1,838 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claude-pipeline/execution-plan.schema.json",
+  "title": "Execution Plan",
+  "description": "Structured execution plan for project monitoring dashboards. Schema 2.0 introduces a knowledge-graph contract; 1.x is preserved for legacy plans.",
+  "type": "object",
+  "required": ["schema_version", "name"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver of the schema. 2.x = unified knowledge-graph; 1.x = legacy."
+    }
+  },
+  "if": {
+    "properties": { "schema_version": { "pattern": "^2\\." } },
+    "required": ["schema_version"]
+  },
+  "then": { "$ref": "#/$defs/plan_2_0" },
+  "else": { "$ref": "#/$defs/plan_1_x" },
+  "$defs": {
+    "plan_1_x": {
+      "type": "object",
+      "required": ["schema_version", "name", "phases"],
+      "properties": {
+        "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "created": { "type": "string", "format": "date" },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+        "updated": { "type": "string", "format": "date" },
+        "changelog": { "type": "array", "items": { "$ref": "#/$defs/changelog_entry" } },
+        "extensions": { "type": "object" },
+        "phases": { "type": "array", "items": { "$ref": "#/$defs/phase_1_x" } }
+      },
+      "additionalProperties": false
+    },
+    "plan_2_0": {
+      "type": "object",
+      "required": [
+        "schema_version", "name", "vision", "users", "success_criteria",
+        "scope", "tech_stack", "existing_infrastructure_to_reuse",
+        "test_targets", "setup", "kill_criteria", "design_notes", "risks", "phases"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "pattern": "^2\\.\\d+\\.\\d+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "vision": { "type": "string", "minLength": 1 },
+        "users": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "success_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/success_criterion" }
+        },
+        "scope": { "$ref": "#/$defs/scope_block" },
+        "tech_stack": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "existing_infrastructure_to_reuse": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "test_targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/test_target" }
+        },
+        "setup": { "$ref": "#/$defs/setup_block" },
+        "kill_criteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/kill_criterion" }
+        },
+        "design_notes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/design_note" }
+        },
+        "risks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/risk" }
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/phase_2_0" }
+        },
+        "scope_mapping_from_backlog": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scope_mapping_entry" }
+        },
+        "deferred": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/deferred_entry" }
+        },
+        "chain_runtime": { "$ref": "#/$defs/chain_runtime" },
+        "quality_warnings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/quality_warning" }
+        },
+        "retro": { "$ref": "#/$defs/retro_block" },
+        "retro_findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/retro_finding" }
+        },
+        "extensions": { "type": "object" },
+        "description": { "type": "string" },
+        "created": { "type": "string", "format": "date" },
+        "updated": { "type": "string", "format": "date" },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+        "changelog": { "type": "array", "items": { "$ref": "#/$defs/changelog_entry" } }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "scope_block": {
+      "type": "object",
+      "required": ["in_scope", "out_of_scope"],
+      "properties": {
+        "in_scope": { "type": "array", "items": { "type": "string" } },
+        "out_of_scope": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "success_criterion": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9-]*$" },
+        "description": { "type": "string", "minLength": 1 },
+        "measurable_via": {
+          "type": "string",
+          "enum": ["test", "manual-check", "metric", "review"]
+        },
+        "verification_steps": { "type": "string" },
+        "verified_at_phase": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "test_target": {
+      "type": "object",
+      "required": ["id", "path"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "path": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "test_command": { "type": "string" },
+        "symlink_allowlist": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "setup_block": {
+      "type": "object",
+      "required": [
+        "prerequisites", "runtime_dependencies", "services_to_provision",
+        "environment_verification", "out_of_scope"
+      ],
+      "properties": {
+        "prerequisites": { "type": "array", "items": { "$ref": "#/$defs/prerequisite" } },
+        "runtime_dependencies": { "type": "array", "items": { "$ref": "#/$defs/runtime_dependency" } },
+        "services_to_provision": { "type": "array", "items": { "$ref": "#/$defs/service_to_provision" } },
+        "environment_verification": { "type": "array", "items": { "$ref": "#/$defs/env_verification_step" } },
+        "sandbox_compatibility": { "$ref": "#/$defs/sandbox_compatibility" },
+        "out_of_scope": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "prerequisite": {
+      "type": "object",
+      "required": ["name", "verify_cmd", "expected_exit", "install_hint"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "verify_cmd": { "type": "string" },
+        "expected_exit": { "type": "integer", "minimum": 0 },
+        "install_hint": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "runtime_dependency": {
+      "type": "object",
+      "required": ["name", "already_installed"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "already_installed": { "type": "boolean" },
+        "install_cmd": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "service_to_provision": {
+      "type": "object",
+      "required": ["name", "port"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "port": { "type": "integer", "minimum": 0 },
+        "verify_cmd": { "type": "string" },
+        "start_cmd": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "env_verification_step": {
+      "type": "object",
+      "required": ["cmd", "expected_exit", "description"],
+      "properties": {
+        "cmd": { "type": "string" },
+        "expected_exit": { "type": "integer", "minimum": 0 },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "sandbox_compatibility": {
+      "type": "object",
+      "properties": {
+        "write_paths": { "type": "array", "items": { "type": "string" } },
+        "read_restrictions": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "kill_criterion": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "trigger": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "design_note": {
+      "type": "object",
+      "required": ["id", "note"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "note": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "risk": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "mitigation": { "type": "string" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+      },
+      "additionalProperties": false
+    },
+    "scope_mapping_entry": {
+      "type": "object",
+      "required": ["backlog_ref", "plan_phase_id", "rationale"],
+      "properties": {
+        "backlog_ref": { "type": "string", "minLength": 1 },
+        "plan_phase_id": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 40 }
+      },
+      "additionalProperties": false
+    },
+    "chain_runtime": {
+      "type": "object",
+      "properties": {
+        "chain_state_path": { "type": "string" },
+        "chain_events_path": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "quality_warning": {
+      "type": "object",
+      "required": ["pattern_id", "task_or_phase_id", "description"],
+      "properties": {
+        "pattern_id": { "type": "string" },
+        "task_or_phase_id": { "type": "string" },
+        "description": { "type": "string" },
+        "retried_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "retro_block": {
+      "type": "object",
+      "required": ["recorded_at", "summary"],
+      "properties": {
+        "recorded_at": { "type": "string", "format": "date-time" },
+        "summary": { "type": "string", "minLength": 120 }
+      },
+      "additionalProperties": false
+    },
+    "retro_finding": {
+      "type": "object",
+      "required": ["id", "finding", "retro_phase", "severity", "owner"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "finding": { "type": "string", "minLength": 1 },
+        "retro_phase": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "enum": ["critical", "warning", "note"] },
+        "owner": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "phase_1_x": {
+      "type": "object",
+      "required": ["id", "name", "tasks"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "tasks": { "type": "array", "items": { "$ref": "#/$defs/task_1_x" } },
+        "gate": { "$ref": "#/$defs/gate" },
+        "extensions": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "phase_2_0": {
+      "type": "object",
+      "required": ["id", "name", "tasks", "overview_summary", "sequencing_rationale"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "overview_summary": { "type": "string", "minLength": 1 },
+        "sequencing_rationale": { "type": "string", "minLength": 1 },
+        "tasks": { "type": "array", "items": { "$ref": "#/$defs/task_2_0" } },
+        "kill_criteria_refs": { "type": "array", "items": { "type": "string" } },
+        "cross_cutting_constraints": { "type": "array", "items": { "type": "string" } },
+        "advisory": { "type": "string" },
+        "gate": { "$ref": "#/$defs/gate_2_0" },
+        "extensions": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "task_1_x": {
+      "type": "object",
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "wip", "done", "failed", "skipped", "blocked"]
+        },
+        "depends": { "type": "array", "items": { "type": "string" } },
+        "prompt": { "type": "string" },
+        "acceptance": { "type": "array", "items": { "type": "string" } },
+        "parallel_group": { "type": "string" },
+        "last_updated": { "type": "string", "format": "date-time" },
+        "delivered_beyond_plan": { "type": "array", "items": { "type": "string" } },
+        "scope_change": { "type": "string" },
+        "remaining_gaps": { "type": "array", "items": { "type": "string" } },
+        "autopilot": { "type": "boolean", "default": false },
+        "pipeline": { "type": "string", "enum": ["full", "light"], "default": "full" },
+        "phase_results": { "type": "array", "items": { "$ref": "#/$defs/phase_result" } },
+        "extensions": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "task_2_0": {
+      "type": "object",
+      "required": ["id", "name", "task_type", "status", "what", "why", "where", "acceptance", "prompt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "task_type": {
+          "type": "string",
+          "enum": ["development", "documentation", "research", "setup", "review", "refactor", "testing", "other"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "wip", "done", "failed", "skipped", "blocked"]
+        },
+        "what": { "type": "string", "minLength": 1 },
+        "why": { "type": "string", "minLength": 1 },
+        "where": { "$ref": "#/$defs/where_block" },
+        "acceptance": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "prompt": { "type": "string", "minLength": 1 },
+        "depends": { "type": "array", "items": { "type": "string" } },
+        "constraints": { "type": "array", "items": { "type": "string" } },
+        "estimate": { "$ref": "#/$defs/task_estimate" },
+        "manualtest_scenarios": { "type": "array", "items": { "type": "string" } },
+        "manual_test": { "type": "string" },
+        "deferred_refs": { "type": "array", "items": { "type": "string" } },
+        "deviations": { "type": "array", "items": { "$ref": "#/$defs/task_deviation" } },
+        "auto_update": { "$ref": "#/$defs/auto_update" },
+        "artifact_refs": { "$ref": "#/$defs/artifact_refs" },
+        "codebase_snapshot": { "$ref": "#/$defs/codebase_snapshot" },
+        "predecessor_context": { "$ref": "#/$defs/predecessor_context" },
+        "phase_results": { "type": "array", "items": { "$ref": "#/$defs/phase_result" } },
+        "extensions": { "type": "object" },
+        "parallel_group": { "type": "string" },
+        "autopilot": { "type": "boolean", "default": false },
+        "pipeline": { "type": "string", "enum": ["full", "light"], "default": "full" },
+        "runner": { "$ref": "#/$defs/task_runner" },
+        "scope_change": { "type": "string" },
+        "delivered_beyond_plan": { "type": "array", "items": { "type": "string" } },
+        "remaining_gaps": { "type": "array", "items": { "type": "string" } },
+        "last_updated": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "where_block": {
+      "type": "object",
+      "properties": {
+        "modify": { "type": "array", "items": { "type": "string" } },
+        "create": { "type": "array", "items": { "type": "string" } },
+        "delete": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "task_estimate": {
+      "type": "object",
+      "properties": {
+        "lines_estimate": { "type": "integer", "minimum": 0 },
+        "duration_hours": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "task_runner": {
+      "description": "Per-task autopilot invocation overrides consumed by autopilot-chain.sh. Optional. When present, the chain applies the listed env vars and CLI flags when invoking autopilot.sh for this task. Used to encode dual-canary patterns (LOCAL_LLM_ROUTING + --stop-after-phase) and other per-task pipeline customization without hardcoding into chain.sh. Added 2026-05-20 by Plan_local-llm-test-harness chain-runner-overrides task.",
+      "type": "object",
+      "properties": {
+        "env": {
+          "description": "Environment variables exported into the autopilot.sh subprocess. Keys must match POSIX env var convention ([A-Z][A-Z0-9_]*); values are strings.",
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][A-Z0-9_]*$": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "flags": {
+          "description": "CLI flags appended to the autopilot.sh invocation. Each flag is a separate array entry (e.g. ['--stop-after-phase', 'static-analysis']).",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "task_deviation": {
+      "type": "object",
+      "required": ["phase", "deviation_id", "description", "decision", "recorded_at"],
+      "properties": {
+        "phase": { "type": "string", "minLength": 1 },
+        "deviation_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "decision": { "type": "string", "enum": ["accept", "revert", "defer"] },
+        "recorded_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "auto_update": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "last_attempt_at": { "type": "string", "format": "date-time" },
+        "retry_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "artifact_refs": {
+      "type": "object",
+      "properties": {
+        "requirements_path": { "type": "string" },
+        "plan_path": { "type": "string" },
+        "review_path": { "type": "string" },
+        "team_review_path": { "type": "string" },
+        "testplan_path": { "type": "string" },
+        "qa_report_path": { "type": "string" },
+        "team_qa_path": { "type": "string" },
+        "static_analysis_path": { "type": "string" },
+        "autopilot_summary_path": { "type": "string" },
+        "autopilot_stream_path": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "codebase_snapshot": {
+      "description": "Structured metadata about what a task introduced — populated by /done and consumed by dependent tasks via predecessor-context.py as a compact alternative to reading dependency REQUIREMENTS/PLAN artifacts (backlog #64).",
+      "type": "object",
+      "properties": {
+        "commit_ref": { "type": "string", "description": "Git SHA of the task's main feature commit (long form preferred)." },
+        "modules_changed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "role": { "type": "string", "description": "One-line description of what the module does." },
+              "lines": { "type": "integer", "minimum": 0 }
+            },
+            "required": ["path"],
+            "additionalProperties": false
+          }
+        },
+        "interfaces_introduced": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "defined_in": { "type": "string", "minLength": 1 },
+              "signature": { "type": "string", "description": "Single-line signature; bash callable convention or Python def line." }
+            },
+            "required": ["name", "defined_in"],
+            "additionalProperties": false
+          }
+        },
+        "tests_added": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "coverage_after": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "additionalProperties": false
+    },
+    "predecessor_context": {
+      "description": "Decision shadow (constraints / rejected approaches / interface contract) — compressed rationale for downstream tasks. Insurance against the Specification Gap when codebase_snapshot + git diff alone are too sparse for multi-agent coordination (backlog #64).",
+      "type": "object",
+      "properties": {
+        "constraints": { "type": "string", "description": "Key design rules downstream callers must respect. Multi-line allowed; soft target ≤10 lines, hard cap ~30 lines." },
+        "rejected": { "type": "string", "description": "Approaches that were considered and rejected, with brief why. Helps downstream avoid re-litigating settled decisions." },
+        "contract": { "type": "string", "description": "How callers should use the interfaces (entry points, import paths, error semantics)." }
+      },
+      "additionalProperties": false
+    },
+    "deferred_entry": {
+      "oneOf": [
+        { "$ref": "#/$defs/deferred_code_finding" },
+        { "$ref": "#/$defs/deferred_review_suggestion" },
+        { "$ref": "#/$defs/deferred_scope_decision" },
+        { "$ref": "#/$defs/deferred_future_enhancement" },
+        { "$ref": "#/$defs/deferred_environment_gap" }
+      ]
+    },
+    "deferred_code_finding": {
+      "type": "object",
+      "required": [
+        "id", "kind", "finding_id", "rule", "file", "line", "state",
+        "reason", "owner", "reviewed_at", "review_trigger"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "code_finding" },
+        "finding_id": { "type": "string", "pattern": "^[a-z0-9-]+:[a-f0-9]{8,}$" },
+        "rule": { "type": "string", "minLength": 1 },
+        "file": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 0 },
+        "state": { "type": "string", "enum": ["WontFix", "FalsePositive", "Deferred", "Accepted"] },
+        "reason": { "type": "string", "minLength": 40 },
+        "owner": { "type": "string", "minLength": 1 },
+        "reviewed_at": { "type": "string" },
+        "review_trigger": {
+          "type": "string",
+          "enum": ["may-defer-autolog", "manual-review", "/grinder-cve", "/qa-defer", "/commit-preflight"]
+        },
+        "ticket": { "type": "string" },
+        "deferred_at_task_id": { "type": "string" },
+        "deferred_at_phase_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "deferred_review_suggestion": {
+      "type": "object",
+      "required": [
+        "id", "kind", "date", "feature_or_task_id", "phase_id",
+        "reviewer", "category", "description", "reason_deferred"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "review_suggestion" },
+        "date": { "type": "string" },
+        "feature_or_task_id": { "type": "string", "minLength": 1 },
+        "phase_id": { "type": "string", "minLength": 1 },
+        "reviewer": {
+          "type": "string",
+          "enum": ["ba", "ux", "architect", "lead-dev", "solid-checker", "performance", "security", "code-reviewer", "qa-lead", "tester", "deep-qa", "deep-code"]
+        },
+        "category": {
+          "type": "string",
+          "enum": ["REQUIREMENTS", "DESIGN", "SOLID", "SRP", "OCP", "ISP", "DIP", "SECURITY", "PERFORMANCE", "AGENTIC", "TDD", "CONVENTION", "COMPLETENESS", "DRIFT", "COVERAGE", "TEST_QUALITY", "CORRECTNESS", "FEASIBILITY"]
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "reason_deferred": { "type": "string", "minLength": 40 }
+      },
+      "additionalProperties": false
+    },
+    "deferred_scope_decision": {
+      "type": "object",
+      "required": ["id", "kind", "date", "decided_at_task_id", "decision", "rationale"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "scope_decision" },
+        "date": { "type": "string" },
+        "decided_at_task_id": { "type": "string", "minLength": 1 },
+        "decision": { "type": "string", "enum": ["dismissed", "deferred", "accepted-for-future"] },
+        "rationale": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "deferred_future_enhancement": {
+      "type": "object",
+      "required": ["id", "kind", "date", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "future_enhancement" },
+        "date": { "type": "string" },
+        "description": { "type": "string", "minLength": 1 },
+        "target_release": { "type": "string" },
+        "effort_estimate": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "deferred_environment_gap": {
+      "type": "object",
+      "required": [
+        "id", "kind", "date", "detected_at_phase",
+        "symptom", "root_cause", "verification_command"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "environment_gap" },
+        "date": { "type": "string" },
+        "detected_at_phase": {
+          "type": "string",
+          "description": "Phase where the gap was first detected (typically 'static-analysis' or 'qa')."
+        },
+        "detected_at_task_id": {
+          "type": "string",
+          "description": "Task whose run surfaced the gap. Optional — gaps may be cross-feature."
+        },
+        "symptom": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact error output (stderr or test failure message) reproducing the gap."
+        },
+        "affected_test_suites": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Test suites blocked by this environment gap."
+        },
+        "root_cause": {
+          "type": "string",
+          "minLength": 40,
+          "description": "One-paragraph explanation of why the gap exists (sandbox restriction, missing dependency, network block, etc.)."
+        },
+        "verification_command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact command (bash one-liner) that reproduces the gap on main, proving it is pre-existing rather than introduced by current branch."
+        },
+        "workaround": {
+          "type": "string",
+          "description": "Concrete workaround (env var, flag, alternate runner) or empty string if none. Operators apply this to unblock the affected suites."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "mitigated", "fixed"],
+          "description": "Lifecycle of the gap. Default 'open' on creation; 'mitigated' when workaround is in place; 'fixed' when the underlying environment issue is resolved."
+        }
+      },
+      "additionalProperties": false
+    },
+    "checklist_item_1_x": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["item"],
+          "properties": {
+            "item": { "type": "string", "minLength": 1 },
+            "check": {
+              "type": "object",
+              "required": ["kind"],
+              "properties": {
+                "kind": { "enum": ["shell", "human"] },
+                "cmd": { "type": "string", "minLength": 1 }
+              },
+              "if": { "properties": { "kind": { "const": "shell" } } },
+              "then": { "required": ["kind", "cmd"] },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "checklist_item_2_0": {
+      "type": "object",
+      "required": ["item"],
+      "properties": {
+        "item": { "type": "string", "minLength": 1 },
+        "check": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {
+              "enum": ["shell", "human", "integration"],
+              "description": "shell = a bash assertion run sandboxed at the gate. human = a manual checklist item. integration = the §4.0 real integration gate: the emergent cross-task verification that only exists once a phase's tasks are combined; run unsandboxed at the phase boundary, conditional on the trigger globs, with a leaddev remediation loop (see trigger/command/remediation)."
+            },
+            "cmd": { "type": "string", "minLength": 1 },
+            "expected_runtime_seconds": { "type": "integer", "minimum": 0 },
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "kind=integration only. The integration command run at the phase gate (e.g. 'bash dashboard/tests/run-all.sh --only-integration'). Optional: if omitted the orchestrator resolves it from the target project's pipeline.yaml integration_test field (§4.1, project-agnostic). The remediation agent NEVER runs this command — the loop is orchestrator-driven so the fixer cannot run the integration suite in its sandbox (§4.4, the load-bearing constraint)."
+            },
+            "trigger": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "kind=integration only (required). Path globs relative to repo root. The gate fires only if the phase's task diffs (git diff <merge-base>...HEAD --name-only) touch one of these globs (§5 conditional trigger). No hit → the gate is skipped entirely (per-task gates already covered the change), so heavy integration runs rarely-but-thoroughly."
+            },
+            "remediation": { "$ref": "#/$defs/gate_remediation" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "kind": { "const": "shell" } } },
+              "then": { "required": ["kind", "cmd"] }
+            },
+            {
+              "if": { "properties": { "kind": { "const": "integration" } } },
+              "then": { "required": ["kind", "trigger", "remediation"] }
+            }
+          ],
+          "additionalProperties": false
+        },
+        "scope_rationale": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Required by R-G3 when check.cmd uses a negative pattern (! grep, test !, etc.) AND/OR when check.cmd's path scope is broader than the union of phase-task paths (R-G1 escape hatch). One-sentence justification of why the chosen scope is the right scope — caller must defend the breadth so a future maintainer can audit."
+        }
+      },
+      "additionalProperties": false
+    },
+    "gate_remediation": {
+      "type": "object",
+      "description": "kind=integration only. The self-healing contract for a failed integration gate (§4.4 remediation loop). The orchestrator runs the integration command, captures failures into INTEGRATION_REPORT.md, and drives a fix→re-run loop. The fixer edits CODE only — never the integration test/oracle (Guard #2, enforced by the plan-ownership WORM lock). The three anti-theater guards (§6) are baked into the field constraints below so the contract itself cannot encode theater.",
+      "required": ["agent", "max_iterations", "on_unfixable"],
+      "properties": {
+        "agent": {
+          "enum": ["lead-developer"],
+          "description": "The remediation agent. Only lead-developer — it already embodies TDD (red-green-refactor), SOLID, and agentic-navigability (§6b); the remediation prompt invokes those skills rather than reinventing the rules. The fixer's TDD target is a unit/changed-area test it CAN run sandboxed; the integration suite is the immutable acceptance oracle above it."
+        },
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Max orchestrator-driven fix→re-run cycles before honest escalation (§6.3). Design default leans 2. Bounded 1..5 to cap the autonomous write→unsandboxed-execute loop — the prompt-injection→sandbox-escape amplification surface of §6a (Guard #4): each iteration runs agent-modified code unsandboxed with no human in the loop, so the iteration count must be small and finite."
+        },
+        "on_unfixable": {
+          "enum": ["escalate"],
+          "description": "What happens after max_iterations with the gate still red. Only `escalate` is permitted — deny + stop for a human (§6.3 honest-fail). The single-value enum structurally forbids fake-pass, perma-warn, and silent-downgrade: a gate that always goes green is decoration regardless of what runs behind it (Guard #3)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "phase_result": {
+      "type": "object",
+      "required": ["phase", "timestamp", "conformance", "acceptance_status", "deviations"],
+      "properties": {
+        "phase": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "conformance": { "enum": ["aligned", "deviated"] },
+        "acceptance_status": { "enum": ["met", "partial", "unmet"] },
+        "deviations": { "type": "array", "items": { "$ref": "#/$defs/deviation" } }
+      },
+      "additionalProperties": false
+    },
+    "deviation": {
+      "type": "object",
+      "required": ["type", "description", "reason", "impact", "criteria_affected"],
+      "properties": {
+        "type": {
+          "enum": [
+            "scope_change",
+            "requirement_added",
+            "requirement_dropped",
+            "strategy_change",
+            "integration_gap",
+            "gate_logic_drift",
+            "error_reporting_tautology",
+            "factual_error",
+            "test_tautology",
+            "sycophancy",
+            "acceptance_reinterpretation",
+            "architectural_change_without_anchor"
+          ]
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "impact": { "enum": ["added", "removed", "modified"] },
+        "criteria_affected": { "type": "array", "items": { "type": "string" } },
+        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "evidence": { "type": "string", "minLength": 80 }
+      },
+      "additionalProperties": false
+    },
+    "changelog_entry": {
+      "type": "object",
+      "required": ["date", "type", "description"],
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "type": { "type": "string", "enum": ["added", "removed", "restructured", "modified"] },
+        "description": { "type": "string" },
+        "affected_tasks": { "type": "array", "items": { "type": "string" } },
+        "affected_phases": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "gate": {
+      "type": "object",
+      "required": ["name", "checklist", "passed"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "checklist": { "type": "array", "items": { "$ref": "#/$defs/checklist_item_1_x" } },
+        "passed": { "type": "boolean" },
+        "command": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "gate_2_0": {
+      "type": "object",
+      "required": ["name", "checklist", "passed"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "checklist": { "type": "array", "items": { "$ref": "#/$defs/checklist_item_2_0" } },
+        "passed": { "type": "boolean" },
+        "command": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

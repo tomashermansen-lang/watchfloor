@@ -1,0 +1,33 @@
+# Session data (ephemeral, not version controlled)
+# Anchored to dashboard/ root so tests/fixtures/data/ remains tracked.
+/data/
+*.jsonl
+*.jsonl.1
+
+# Claude Code logs
+.claude/logs/
+
+# Node (root-level artifacts — real app lives in app/)
+node_modules/
+package.json
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Crash recovery markers (per-project, created by flow commands)
+.planning/
+
+# SonarQube scanner ephemeral output (regenerated each run)
+.scannerwork/
+
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~

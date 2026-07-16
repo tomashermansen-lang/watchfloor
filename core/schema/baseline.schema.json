@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "baseline.schema.json",
+  "$comment": "Defines the structural contract for baseline.json — the frozen quality snapshot emitted after all grinder passes complete. The deferred_findings_ref field contains a relative path from the project root to the deferred-findings.json file (e.g., docs/grinder/deferred-findings.json), linking the baseline to its companion deferred-findings audit trail defined by deferred-findings.schema.json. Validation boundary: this schema enforces structural correctness (field types, ranges, required fields). Semantic validation — such as verifying the referenced deferred-findings file exists or that tool_versions keys match the manifest — belongs in validate-plan.py --schema (Phase 1, schema-validators task).",
+  "type": "object",
+  "required": [
+    "created_at",
+    "git_sha",
+    "coverage",
+    "findings_count",
+    "tool_versions",
+    "deferred_findings_ref"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "git_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/coverage_value"
+      }
+    },
+    "findings_count": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "tool_versions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "deferred_findings_ref": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "coverage_value": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    }
+  }
+}

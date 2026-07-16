@@ -1,0 +1,52 @@
+[
+  {
+    "id": "shellcheck:SC2086-deploy.sh-aabb1122",
+    "tool": "shellcheck",
+    "rule": "SC2086",
+    "file": "claude/tools/deploy.sh",
+    "line": 10,
+    "severity": "warning",
+    "message": "Double quote to prevent globbing",
+    "content_hash": "aabb1122"
+  },
+  {
+    "id": "shellcheck:SC2034-deploy.sh-ccdd3344",
+    "tool": "shellcheck",
+    "rule": "SC2034",
+    "file": "claude/tools/deploy.sh",
+    "line": 50,
+    "severity": "info",
+    "message": "VAR appears unused",
+    "content_hash": "ccdd3344"
+  },
+  {
+    "id": "shellcheck:SC2155-other.sh-eeff5566",
+    "tool": "shellcheck",
+    "rule": "SC2155",
+    "file": "claude/tools/other.sh",
+    "line": 5,
+    "severity": "warning",
+    "message": "Declare and assign separately",
+    "content_hash": "eeff5566"
+  },
+  {
+    "id": "ruff:E501-utils.py-11223344",
+    "tool": "ruff",
+    "rule": "E501",
+    "file": "src/utils.py",
+    "line": 20,
+    "severity": "error",
+    "message": "Line too long",
+    "content_hash": "11223344"
+  },
+  {
+    "id": "ruff:F401-main.py-55667788",
+    "tool": "ruff",
+    "rule": "F401",
+    "file": "src/main.py",
+    "line": 3,
+    "severity": "error",
+    "message": "Unused import",
+    "content_hash": "55667788"
+  }
+]

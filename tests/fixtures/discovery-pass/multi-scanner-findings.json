@@ -1,0 +1,42 @@
+[
+  {
+    "id": "shellcheck:SC2086-grinder.sh-a1b2c3d4",
+    "tool": "shellcheck",
+    "rule": "SC2086",
+    "file": "claude/tools/grinder.sh",
+    "line": 15,
+    "severity": "error",
+    "message": "Double quote to prevent globbing and word splitting.",
+    "content_hash": "a1b2c3d4"
+  },
+  {
+    "id": "shellcheck:SC2034-grinder.sh-b2c3d4e5",
+    "tool": "shellcheck",
+    "rule": "SC2034",
+    "file": "claude/tools/grinder.sh",
+    "line": 22,
+    "severity": "warning",
+    "message": "VAR appears unused. Verify use (or export).",
+    "content_hash": "b2c3d4e5"
+  },
+  {
+    "id": "bandit:B101-auth.py-c3d4e5f6",
+    "tool": "bandit",
+    "rule": "B101",
+    "file": "src/auth.py",
+    "line": 10,
+    "severity": "warning",
+    "message": "Use of assert detected.",
+    "content_hash": "c3d4e5f6"
+  },
+  {
+    "id": "bandit:B105-config.py-d4e5f6a7",
+    "tool": "bandit",
+    "rule": "B105",
+    "file": "src/config.py",
+    "line": 5,
+    "severity": "error",
+    "message": "Possible hardcoded password.",
+    "content_hash": "d4e5f6a7"
+  }
+]

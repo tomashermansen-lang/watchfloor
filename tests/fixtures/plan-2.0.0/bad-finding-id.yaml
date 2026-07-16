@@ -1,0 +1,56 @@
+schema_version: 2.0.0
+name: bad-finding-id-fixture
+vision: Negative fixture — deferred entry kind code_finding has malformed finding_id, triggering R12 dispatch error.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 1 on bad finding_id pattern
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+deferred:
+  - id: BAD-FID-1
+    kind: code_finding
+    finding_id: "foo:short"
+    rule: ruff:E501
+    file: claude/tools/x.py
+    line: 1
+    state: Deferred
+    reason: Forty plus character reason that does not include short to keep the regex pattern test honest.
+    owner: lead-dev
+    reviewed_at: "2026-04-26T08:00:00Z"
+    review_trigger: may-defer-autolog
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Negative coverage.
+    sequencing_rationale: Polymorphic deferred entries dispatch on kind; validator must enforce kind-specific shapes including the finding_id pattern.
+    tasks:
+      - id: t1
+        name: T1
+        task_type: development
+        status: pending
+        what: Sufficiently long task what string for deferred polymorphic dispatch testing on bad finding_id pattern matching.
+        why: This fixture proves R12 dispatch fails on malformed finding_id so consumers cannot persist invalid grinder hashes through the deferral machinery.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When validate-plan.py runs, the system shall exit 1.
+        prompt: t1

@@ -1,0 +1,6 @@
+{"ts":"2026-04-17T10:05:00Z","batch":"batch-1","event":"started","session_id":"sess-001"}
+{"ts":"2026-04-17T10:15:00Z","batch":"batch-1","event":"completed","files_fixed":2,"tests_added":0,"turns":5}
+{"ts":"2026-04-17T10:16:00Z","batch":"batch-2","event":"started","session_id":"sess-002"}
+{"ts":"2026-04-17T10:25:00Z","batch":"batch-2","event":"completed","files_fixed":1,"tests_added":1,"turns":3}
+{"ts":"2026-04-17T10:30:00Z","batch":"batch-3","event":"started","session_id":"sess-003"}
+{"ts":"2026-04-17T10:40:00Z","batch":"batch-3","event":"comple

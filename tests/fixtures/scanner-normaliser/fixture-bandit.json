@@ -1,0 +1,25 @@
+{
+  "results": [
+    {
+      "filename": "src/app.py",
+      "line_number": 10,
+      "test_id": "B101",
+      "issue_severity": "HIGH",
+      "issue_text": "Use of assert detected."
+    },
+    {
+      "filename": "src/utils.py",
+      "line_number": 5,
+      "test_id": "B301",
+      "issue_severity": "MEDIUM",
+      "issue_text": "Pickle usage detected."
+    },
+    {
+      "filename": "src/config.py",
+      "line_number": 1,
+      "test_id": "B105",
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password."
+    }
+  ]
+}

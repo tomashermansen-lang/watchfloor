@@ -1,0 +1,10 @@
+I will read the file now.
+  ⏺ Read(Read config file)
+  ⎿ line1
+  ⎿ line2
+  ⎿ line3
+The file contains three lines.
+  ⏺ Bash(Print hello)
+  ⎿ hello
+
+  ═══ Result: success | 3 turns | 15s | $0.42

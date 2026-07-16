@@ -20,14 +20,19 @@ set -euo pipefail
 #    Langfuse:  3000
 #
 #  Usage:
-#    start-system                       # start all
+#    start-system                       # start defaults: dashboard + sonarqube
 #    start-system dashboard             # start only dashboard
-#    start-system oih                   # start only OIH
+#    start-system oih                   # start OIH (incl. docker postgres + langfuse) — opt-in
 #    start-system oih /path/to/worktree # start OIH from specific worktree
-#    start-system eulex                 # start only Eulex RAG
+#    start-system eulex                 # start only Eulex RAG — opt-in
 #    start-system sonarqube             # start only SonarQube
 #    start-system stop                  # kill all reserved ports
 #    start-system check                 # pre-flight health check
+#
+#  OIH + Eulex are NOT in `start-system all` — they only start when
+#  explicitly invoked. OIH's docker stack (postgres + langfuse) is heavy
+#  and rarely needed for dashboard work, so we keep it off by default.
+#  `stop_oih` brings the docker stack down symmetrically.
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # ── Port Definitions ─────────────────────────────────────
@@ -58,7 +63,10 @@ if [[ -f "$CONF_FILE" ]]; then
 fi
 
 PROJECTS_ROOT="${PROJECTS_ROOT:-$HOME/Projekter}"
-DASHBOARD_DIR="${DASHBOARD_DIR:-$PROJECTS_ROOT/claude-agent-dashboard}"
+DASHBOARD_DIR="${DASHBOARD_DIR:-$PROJECTS_ROOT/dotfiles/dashboard}"
+# Repo root containing this script — used by error hints to point operators at
+# the correct `uv sync` location (R4 / EC-2 / EC-3).
+REPO_ROOT_HINT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OIH_DIR="${OIH_DIR:-$PROJECTS_ROOT/OIH}"
 EULEX_DIR="${EULEX_DIR:-$PROJECTS_ROOT/eulex-single-law-retrieval-artikel99}"
 SONARQUBE_DIR="${SONARQUBE_DIR:-$PROJECTS_ROOT/sonarqube}"
@@ -135,6 +143,58 @@ wait_for_port() {
   return 1
 }
 
+# ── Dashboard launcher helpers (fastapi-cutover, T0.3) ─────────────
+# ensure_port_free <port> — return 0 if port is free, 1 if bound. The
+# helper does NOT kill the conflicting process (R5 fail-closed); it
+# only detects. Detection prefers `lsof -ti` (already in PATH for
+# kill_port) and falls back to bash `/dev/tcp` if lsof is missing
+# (Risk-E, sandboxed environments).
+ensure_port_free() {
+  local port=$1
+  # Reject non-numeric ports defensively (EC-4 / EC-11 — defends shell-
+  # injection vectors at the helper boundary).
+  if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}Error:${NC} ensure_port_free: invalid port '$port'" >&2
+    return 1
+  fi
+  local bound=0
+  if command -v lsof >/dev/null 2>&1; then
+    if lsof -ti :"$port" >/dev/null 2>&1; then
+      bound=1
+    fi
+  else
+    if (echo > "/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1; then
+      bound=1
+    fi
+  fi
+  if [[ "$bound" -eq 1 ]]; then
+    echo "Error: port $port already in use; refusing to start dashboard" >&2
+    return 1
+  fi
+  return 0
+}
+
+# wait_for_health <port> <name> — poll http://127.0.0.1:<port>/health
+# until 200 OK or timeout. Production timeout is 30s with 0.5s cadence
+# (60 iterations). Risk-C: tests override via DASHBOARD_HEALTH_TIMEOUT.
+wait_for_health() {
+  local port=$1 name=$2
+  local timeout=${DASHBOARD_HEALTH_TIMEOUT:-30}
+  # 0.5s cadence → iterations = timeout * 2.
+  local iterations=$((timeout * 2))
+  local i
+  for ((i=0; i<iterations; i++)); do
+    if curl -sf "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+      echo -e "  ${GREEN}✓${NC} $name ready on port $port"
+      return 0
+    fi
+    sleep 0.5
+  done
+  echo -e "  ${RED}✗${NC} $name failed to become healthy on port $port within ${timeout}s" >&2
+  echo -e "    Hint: workspace .venv may be missing fastapi/uvicorn — run: cd \"$REPO_ROOT_HINT\" && uv sync --extra dev" >&2
+  return 1
+}
+
 # ── Pre-Flight Health Check ──────────────────────────────
 check_health() {
   local errors=0
@@ -195,14 +255,20 @@ check_health() {
     fi
   done
 
-  # Node modules
+  # Node modules. Suggest the right install command per project — dashboard
+  # is on pnpm (a77203e), OIH + EULEX still on npm.
   for ui_dir in "$DASHBOARD_DIR/app" "$OIH_DIR/ui" "$EULEX_DIR/ui_react/frontend"; do
-    local proj_name
+    local proj_name install_hint
     proj_name=$(basename "$(dirname "$ui_dir")")
+    if [[ -f "$ui_dir/pnpm-lock.yaml" ]]; then
+      install_hint="pnpm install"
+    else
+      install_hint="npm install"
+    fi
     if [[ -d "$ui_dir/node_modules" ]]; then
       echo -e "  ${GREEN}✓${NC} node_modules: $proj_name"
     else
-      echo -e "  ${YELLOW}⚠${NC} No node_modules in $proj_name — run npm install"
+      echo -e "  ${YELLOW}⚠${NC} No node_modules in $proj_name — run $install_hint"
     fi
   done
 
@@ -219,24 +285,50 @@ check_health() {
 # ── Start Functions ──────────────────────────────────────
 start_dashboard() {
   echo -e "${BOLD}${CYAN}── Claude Agent Dashboard ──${NC}"
-  kill_ports "$DASHBOARD_BACKEND" "$DASHBOARD_FRONTEND"
-  sleep 1
 
-  # Backend (serve.py) — use venv for pyyaml dependency
-  echo "  Starting backend on :$DASHBOARD_BACKEND ..."
+  # R13: DASHBOARD_PORT is the canonical name; DASHBOARD_BACKEND remains
+  # the registry default. Operator-set DASHBOARD_PORT wins.
+  local DASHBOARD_PORT="${DASHBOARD_PORT:-$DASHBOARD_BACKEND}"
+
+  # R5 / AS-6: fail closed on port-in-use. The conflicting process is NOT
+  # killed; operator must run `start-system stop` to reclaim ports.
+  ensure_port_free "$DASHBOARD_PORT" || return 1
+
+  # Backend (FastAPI via uvicorn — fastapi-cutover, T0.3).
+  echo "  Starting backend on :$DASHBOARD_PORT (uvicorn dashboard.server.app:app) ..."
   cd "$DASHBOARD_DIR"
+  local py
   if [[ -x "$DASHBOARD_DIR/.venv/bin/python" ]]; then
-    "$DASHBOARD_DIR/.venv/bin/python" serve.py &>/dev/null &
+    py="$DASHBOARD_DIR/.venv/bin/python"
+  elif [[ -x "$REPO_ROOT_HINT/.venv/bin/python" ]]; then
+    py="$REPO_ROOT_HINT/.venv/bin/python"
   else
-    python3 serve.py &>/dev/null &
+    py="python3"
   fi
+  local cmd=("$py" -m uvicorn dashboard.server.app:app
+             --host 127.0.0.1 --port "$DASHBOARD_PORT")
+  # R2 / AS-2: dev mode appends --reload + --reload-dir. Production never
+  # reloads; the magic value 'dev' is the documented sentinel.
+  if [[ "${DASHBOARD_ENV:-}" == "dev" ]]; then
+    cmd+=(--reload --reload-dir dashboard/server)
+  fi
+  PYTHONPATH="$REPO_ROOT_HINT" "${cmd[@]}" &>/dev/null &
 
-  # Frontend (vite dev)
+  # Frontend (vite dev). Dashboard migrated to pnpm in a77203e; OIH +
+  # EULEX still on npm. Fall back to npm if pnpm missing so this works
+  # on machines without pnpm installed.
   echo "  Starting frontend on :$DASHBOARD_FRONTEND ..."
   cd "$DASHBOARD_DIR/app"
-  npm run dev -- --port "$DASHBOARD_FRONTEND" &>/dev/null &
+  if command -v pnpm >/dev/null 2>&1 && [[ -f pnpm-lock.yaml ]]; then
+    pnpm run dev --port "$DASHBOARD_FRONTEND" &>/dev/null &
+  else
+    npm run dev -- --port "$DASHBOARD_FRONTEND" &>/dev/null &
+  fi
 
-  wait_for_port "$DASHBOARD_BACKEND" "Dashboard API"
+  # R4 / AS-5: HTTP /health readiness loop replaces lsof wait_for_port.
+  # Returns 1 (NOT exit 1) on timeout so the caller (`set -e`) propagates
+  # the failure (Risk-A / EC-10).
+  wait_for_health "$DASHBOARD_PORT" "Dashboard API" || return 1
   echo ""
 }
 
@@ -295,13 +387,28 @@ start_eulex() {
 
 start_sonarqube() {
   echo -e "${BOLD}${CYAN}── SonarQube ──${NC}"
-  kill_port "$SONARQUBE_PORT"
-  sleep 1
+
+  # Smart-detect: if Sonar already responds UP, no-op. Avoids the previous
+  # `kill_port` step that confused the Docker container by killing the
+  # host-side bind out from under the running container. Container
+  # lifecycle is Docker's job — we don't manage it port-by-port.
+  if curl -sf -m 3 "http://localhost:$SONARQUBE_PORT/api/system/status" 2>/dev/null \
+     | grep -q '"status":"UP"'; then
+    echo -e "  ${GREEN}✓${NC} SonarQube already UP — no action needed"
+    echo ""
+    return 0
+  fi
+
+  # Docker daemon required.
+  if ! docker info >/dev/null 2>&1; then
+    echo -e "  ${RED}✗${NC} Docker daemon not running — start Docker Desktop first"
+    return 1
+  fi
 
   echo "  Starting SonarQube on :$SONARQUBE_PORT ..."
   cd "$SONARQUBE_DIR"
   docker compose up -d 2>/dev/null || {
-    echo -e "  ${RED}✗${NC} Failed to start SonarQube (is Docker running?)"
+    echo -e "  ${RED}✗${NC} Failed to start SonarQube (docker compose up failed)"
     return 1
   }
 
@@ -310,10 +417,90 @@ start_sonarqube() {
   echo ""
 }
 
+# ── Per-service stop functions ─────────────────────────────────────
+# Each one kills ONLY its own ports. Used by `start-system stop <svc>`
+# for surgical service-restarts that don't take down sibling services.
+# stop_all calls them all in turn (legacy `start-system stop` path).
+
+stop_dashboard() {
+  echo -e "${BOLD}${RED}── Stopping Dashboard ──${NC}"
+  kill_ports "$DASHBOARD_BACKEND" "$DASHBOARD_FRONTEND"
+}
+
+stop_oih() {
+  echo -e "${BOLD}${RED}── Stopping OIH ──${NC}"
+  kill_ports "$OIH_BACKEND" "$OIH_FRONTEND"
+  # Also bring down the docker compose stack (postgres + langfuse).
+  # Without this, `start-system stop` would kill the backend but leave
+  # heavy containers running indefinitely — defeating the opt-in design.
+  # Same shape as stop_sonarqube: skip if Docker isn't reachable.
+  if [[ -f "$OIH_DIR/docker-compose.yml" ]] && docker info >/dev/null 2>&1; then
+    cd "$OIH_DIR"
+    docker compose stop 2>/dev/null || {
+      echo -e "  ${YELLOW}⚠${NC} docker compose stop returned non-zero (container may not exist yet)"
+    }
+  fi
+}
+
+stop_eulex() {
+  echo -e "${BOLD}${RED}── Stopping Eulex RAG ──${NC}"
+  kill_ports "$EULEX_BACKEND" "$EULEX_FRONTEND"
+}
+
+stop_sonarqube() {
+  # Sonar runs as a Docker container. Killing the host-side port leaves
+  # the container alive but disconnected — confuses Docker's view of
+  # state. `docker compose stop` is the graceful equivalent. If Docker
+  # daemon is unreachable, fall through with a warning rather than fail
+  # (same shape as start-side: don't gate stop on Docker being up).
+  echo -e "${BOLD}${RED}── Stopping SonarQube ──${NC}"
+  if ! docker info >/dev/null 2>&1; then
+    echo -e "  ${YELLOW}⚠${NC} Docker daemon not running — nothing to stop"
+    return 0
+  fi
+  cd "$SONARQUBE_DIR"
+  docker compose stop 2>/dev/null || {
+    echo -e "  ${YELLOW}⚠${NC} docker compose stop returned non-zero (container may not exist yet)"
+  }
+}
+
 stop_all() {
   echo -e "${BOLD}${RED}── Stopping all services ──${NC}"
-  kill_ports "${ALL_PORTS[@]}"
+  # Each stop_* tolerates absent state, so use `|| true` so a failure in
+  # one branch doesn't abort under set -e.
+  stop_dashboard || true
+  stop_oih || true
+  stop_eulex || true
+  stop_sonarqube || true
   echo -e "${GREEN}All reserved ports cleared.${NC}"
+}
+
+# ── Status probe (read-only) ───────────────────────────────────────
+
+print_status_probe() {
+  echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${BOLD}  Service Status${NC}"
+  echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+  local spec name port probe_url
+  for spec in \
+    "Dashboard $DASHBOARD_BACKEND http://localhost:$DASHBOARD_BACKEND/health" \
+    "OIH       $OIH_BACKEND       http://localhost:$OIH_BACKEND/" \
+    "Eulex     $EULEX_BACKEND     http://localhost:$EULEX_BACKEND/" \
+    "SonarQube $SONARQUBE_PORT    http://localhost:$SONARQUBE_PORT/api/system/status"
+  do
+    name=$(echo "$spec" | awk '{print $1}')
+    port=$(echo "$spec" | awk '{print $2}')
+    probe_url=$(echo "$spec" | awk '{print $3}')
+    if curl -sf -m 2 "$probe_url" >/dev/null 2>&1; then
+      echo -e "  ${GREEN}✓${NC} $name (:$port) UP"
+    elif lsof -ti :"$port" >/dev/null 2>&1; then
+      echo -e "  ${YELLOW}⚠${NC} $name (:$port) port held but health probe failed"
+    else
+      echo -e "  ${RED}✗${NC} $name (:$port) DOWN"
+    fi
+  done
+  echo ""
 }
 
 print_status() {
@@ -342,22 +529,61 @@ print_status() {
 }
 
 # ── Main ─────────────────────────────────────────────────
-case "${1:-all}" in
-  dashboard)  start_dashboard; print_status ;;
-  oih)        start_oih "${2:-}"; print_status ;;
-  eulex)      start_eulex "${2:-}"; print_status ;;
-  sonarqube)  start_sonarqube; print_status ;;
-  stop)       stop_all ;;
-  check)      check_health ;;
-  all)
-    start_dashboard
-    start_oih
-    start_eulex
-    start_sonarqube
-    print_status
-    ;;
-  *)
-    echo "Usage: $0 {all|dashboard|oih|eulex|sonarqube|stop|check} [worktree-path]"
-    exit 1
-    ;;
-esac
+# DASHBOARD_TEST_NO_DISPATCH=1 lets the bash test harness
+# (tests/test_start_system_dashboard.sh) source this file purely for
+# helper coverage without executing the start dispatch.
+if [[ "${DASHBOARD_TEST_NO_DISPATCH:-0}" != "1" ]]; then
+  case "${1:-all}" in
+    dashboard)  start_dashboard; print_status ;;
+    oih)        start_oih "${2:-}"; print_status ;;
+    eulex)      start_eulex "${2:-}"; print_status ;;
+    sonarqube)  start_sonarqube; print_status ;;
+    stop)
+      # `start-system stop` (no second arg) → stop_all (backward compat).
+      # `start-system stop <service>` → only that service.
+      case "${2:-all}" in
+        all)        stop_all ;;
+        dashboard)  stop_dashboard ;;
+        oih)        stop_oih ;;
+        eulex)      stop_eulex ;;
+        sonarqube)  stop_sonarqube ;;
+        *)
+          echo "Usage: $0 stop [all|dashboard|oih|eulex|sonarqube]" >&2
+          exit 1
+          ;;
+      esac
+      ;;
+    restart)
+      # `start-system restart <service>` — surgical stop + start. No
+      # `restart all` — that's `start-system stop && start-system`.
+      case "${2:-}" in
+        dashboard)  stop_dashboard; sleep 2; start_dashboard; print_status ;;
+        oih)        stop_oih;       sleep 2; start_oih "${3:-}"; print_status ;;
+        eulex)      stop_eulex;     sleep 2; start_eulex "${3:-}"; print_status ;;
+        sonarqube)  stop_sonarqube; sleep 2; start_sonarqube; print_status ;;
+        *)
+          echo "Usage: $0 restart {dashboard|oih|eulex|sonarqube} [worktree-path]" >&2
+          exit 1
+          ;;
+      esac
+      ;;
+    status)     print_status_probe ;;
+    check)      check_health ;;
+    all)
+      # Defaults only: dashboard + sonarqube. OIH and Eulex are opt-in
+      # (heavy: OIH spins postgres + langfuse via docker compose, Eulex
+      # rarely needed during dashboard work). Invoke them explicitly:
+      #   start-system oih
+      #   start-system eulex
+      # Lenient: a failing service shouldn't abort the rest. Each
+      # start_* call tolerated with `|| true` so set -e doesn't trip.
+      start_dashboard || true
+      start_sonarqube || true
+      print_status
+      ;;
+    *)
+      echo "Usage: $0 {all|dashboard|oih|eulex|sonarqube|stop [svc]|restart <svc>|status|check} [worktree-path]"
+      exit 1
+      ;;
+  esac
+fi

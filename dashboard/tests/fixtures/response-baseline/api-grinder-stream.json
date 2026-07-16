@@ -1,0 +1,10 @@
+{
+  "slug": "api-grinder-stream",
+  "method": "GET",
+  "path": "/api/grinder/stream",
+  "query": "project=zzznonexistent&offset=0",
+  "status": 404,
+  "content_type": "text/html;charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "<!DOCTYPE HTML>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <title>Error response</title>\n    </head>\n    <body>\n        <h1>Error response</h1>\n        <p>Error code: 404</p>\n        <p>Message: Project not found or has no grinder data.</p>\n        <p>Error code explanation: 404 - Nothing matches the given URI.</p>\n    </body>\n</html>\n"
+}

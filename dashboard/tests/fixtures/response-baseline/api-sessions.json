@@ -1,0 +1,10 @@
+{
+  "slug": "api-sessions",
+  "method": "GET",
+  "path": "/api/sessions",
+  "query": "",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "body_encoding": "utf-8",
+  "body": "[{\"sid\": \"hermetic-sid-2\", \"cwd\": \"__HERMETIC_HOME__\", \"worktree\": \"__HERMETIC_HOME__\", \"branch\": \"feature/widget\", \"event\": \"SessionEnd\", \"type\": \"\", \"msg\": \"\", \"ts\": \"2024-01-01T00:00:10Z\", \"status\": \"completed\", \"flow\": {\"feature\": \"widget\", \"phase\": \"plan\", \"phase_index\": 1, \"total_phases\": 9}}, {\"sid\": \"wt-main\", \"cwd\": \"__HERMETIC_HOME__\", \"worktree\": \"__HERMETIC_HOME__\", \"branch\": \"main\", \"event\": \"\", \"type\": \"\", \"msg\": \"\", \"ts\": \"\", \"status\": \"stale\", \"flow\": null}]"
+}

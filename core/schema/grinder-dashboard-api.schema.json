@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "grinder-dashboard-api.schema.json",
+  "$comment": "Defines the response contract for the /grinder/<project> dashboard endpoint. Consumed by the claude-agent-dashboard project. Data sources: grinder-plan.yaml (passes), grinder-state.json (current_batch), events.ndjson (recent_events), deferred-findings.json (top_deferrals).",
+  "type": "object",
+  "required": ["passes", "current_batch", "recent_events", "top_deferrals"],
+  "additionalProperties": false,
+  "properties": {
+    "passes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "status", "batches_total", "batches_completed"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "completed", "failed"]
+          },
+          "batches_total": { "type": "integer", "minimum": 0 },
+          "batches_completed": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "current_batch": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["id", "pass", "started_at", "turns_elapsed"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "pass": { "type": "string", "minLength": 1 },
+            "started_at": { "type": "string", "format": "date-time" },
+            "turns_elapsed": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "recent_events": {
+      "type": "array",
+      "items": { "$ref": "events.schema.json" }
+    },
+    "top_deferrals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule", "count", "example_file"],
+        "additionalProperties": false,
+        "properties": {
+          "rule": { "type": "string", "minLength": 1 },
+          "count": { "type": "integer", "minimum": 1 },
+          "example_file": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

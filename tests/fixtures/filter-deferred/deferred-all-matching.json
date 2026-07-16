@@ -1,0 +1,17 @@
+[
+  {
+    "finding_id": "ruff:E501-foo.py-abcd1234",
+    "state": "WontFix",
+    "reason": "Accepted"
+  },
+  {
+    "finding_id": "ruff:F401-foo.py-beef5678",
+    "state": "WontFix",
+    "reason": "Accepted"
+  },
+  {
+    "finding_id": "shellcheck:SC2086-run.sh-dead9012",
+    "state": "Deferred",
+    "reason": "Low priority"
+  }
+]

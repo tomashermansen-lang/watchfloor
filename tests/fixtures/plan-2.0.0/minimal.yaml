@@ -1,0 +1,74 @@
+schema_version: 2.0.0
+name: minimal-fixture
+vision: A 1-phase 1-task plan exercising every required 2.0 field with realistic prose.
+users:
+  - operator running validate-plan against fixtures
+success_criteria:
+  - id: SC-1
+    description: validate-plan.py exits 0 against this fixture under schema 2.0.0 with no warnings
+    measurable_via: test
+    verified_at_phase: testplan
+scope:
+  in_scope:
+    - schema 2.0 happy path
+  out_of_scope:
+    - real producer flow
+tech_stack:
+  - python3
+  - jsonschema
+existing_infrastructure_to_reuse:
+  - claude/tools/validate-plan.py
+test_targets:
+  - id: dotfiles
+    path: .
+    description: this dotfiles repo
+setup:
+  prerequisites:
+    - name: python3
+      verify_cmd: python3 --version
+      expected_exit: 0
+      install_hint: brew install python3
+  runtime_dependencies:
+    - name: pyyaml
+      already_installed: true
+  services_to_provision: []
+  environment_verification:
+    - cmd: python3 --version
+      expected_exit: 0
+      description: ensure python3 reachable
+  out_of_scope:
+    - SonarQube provisioning
+kill_criteria:
+  - id: KC-1
+    description: schema rejects valid plan
+design_notes:
+  - id: DN-1
+    note: minimal happy path is the primary regression guard
+risks:
+  - id: RSK-1
+    description: schema may overconstrain forward-compat fields
+    severity: low
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Establish the schema 2.0 contract.
+    sequencing_rationale: Foundation must land first because every other component depends on the schema.
+    tasks:
+      - id: schema-core
+        name: Schema 2.0 core
+        task_type: development
+        status: pending
+        what: Define the JSON Schema 2.0.0 contract covering project, phase, and task field sets with additionalProperties false at every level so unknown fields are rejected.
+        why: The schema is the single source of truth for validate-plan and downstream agents; without a complete contract, drift between producers and consumers cannot be detected programmatically and the producer-quality patterns have nothing to anchor against during self-review.
+        where:
+          modify:
+            - claude/schema/execution-plan.schema.json
+          create: []
+          delete: []
+        acceptance:
+          - When validate-plan.py runs against minimal.yaml, the system shall exit 0 with no errors.
+          - While the schema is loaded, every nested object shall declare additionalProperties false.
+        prompt: Write the JSON Schema 2.0.0 contract.
+        estimate:
+          lines_estimate: 100
+          duration_hours: 2

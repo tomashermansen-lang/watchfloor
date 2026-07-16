@@ -1,0 +1,3 @@
+{"sid": "hermetic-sid-1", "cwd": "__PROJECTS_ROOT__/alpha", "branch": "feature/widget", "event": "Stop", "type": "", "msg": "hermetic event 1", "ts": "2024-01-01T00:00:00Z"}
+{"sid": "hermetic-sid-2", "cwd": "__PROJECTS_ROOT__/alpha", "branch": "feature/widget", "event": "PostToolUse", "type": "Read", "msg": "{\"file_path\":\"__PROJECTS_ROOT__/alpha/README.md\"}", "ts": "2024-01-01T00:00:05Z"}
+{"sid": "hermetic-sid-2", "cwd": "__PROJECTS_ROOT__/alpha", "branch": "feature/widget", "event": "SessionEnd", "type": "", "msg": "", "ts": "2024-01-01T00:00:10Z"}

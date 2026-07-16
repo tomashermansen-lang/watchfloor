@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deviation-taxonomy.schema.json",
+  "title": "Deviation Taxonomy",
+  "description": "Structural contract for adapters/claude-code/claude/tools/lib/deviation-taxonomy.yaml. The YAML is the human-readable companion to the deviation $def enum in execution-plan.schema.json; this schema pins its shape so categories cannot drift silently. See pipeline-optimization-v2 plan DN-D for contract semantics.",
+  "$comment": "Consumed by the Phase 1 gate predicate via direct open() and by tests/test_deviation_taxonomy.py. Not registered in schema_paths.py (host plan DN-G).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "integration_gap",
+    "gate_logic_drift",
+    "error_reporting_tautology",
+    "factual_error",
+    "test_tautology",
+    "sycophancy",
+    "acceptance_reinterpretation",
+    "architectural_change_without_anchor"
+  ],
+  "properties": {
+    "integration_gap": {"$ref": "#/$defs/category"},
+    "gate_logic_drift": {"$ref": "#/$defs/category"},
+    "error_reporting_tautology": {"$ref": "#/$defs/category"},
+    "factual_error": {"$ref": "#/$defs/category"},
+    "test_tautology": {"$ref": "#/$defs/category"},
+    "sycophancy": {"$ref": "#/$defs/category"},
+    "acceptance_reinterpretation": {"$ref": "#/$defs/category"},
+    "architectural_change_without_anchor": {"$ref": "#/$defs/category"}
+  },
+  "$defs": {
+    "category": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "example", "typical_phase"],
+      "properties": {
+        "description": {"type": "string", "minLength": 1},
+        "example": {"type": "string", "minLength": 1},
+        "typical_phase": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

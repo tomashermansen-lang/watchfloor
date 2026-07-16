@@ -1,0 +1,47 @@
+schema_version: 2.0.0
+name: medium-task-warning-fixture
+vision: Positive fixture — task with lines_estimate=150 emits WARNING and exits 0.
+users:
+  - validator under test
+success_criteria:
+  - id: SC-1
+    description: validator exits 0 with R-A5 soft-target WARNING on stderr
+scope:
+  in_scope: []
+  out_of_scope: []
+tech_stack:
+  - python3
+existing_infrastructure_to_reuse: []
+test_targets:
+  - id: dotfiles
+    path: .
+setup:
+  prerequisites: []
+  runtime_dependencies: []
+  services_to_provision: []
+  environment_verification: []
+  out_of_scope: []
+kill_criteria: []
+design_notes: []
+risks: []
+phases:
+  - id: foundation
+    name: Foundation
+    overview_summary: Positive coverage of R-A5 warning band.
+    sequencing_rationale: walking-skeleton — exercises the soft-target band between 150 LOC target and 300 LOC cap
+    tasks:
+      - id: medium-task
+        name: Medium-sized task
+        task_type: development
+        status: pending
+        what: This task is sufficiently long but declares lines_estimate of 150 which sits in the R-A5 warning band between 100-LOC target and 200-LOC cap.
+        why: Soft warnings nudge producers toward smaller tasks without blocking emit; this fixture proves the warning fires at exit code 0.
+        where:
+          modify:
+            - claude/tools/x.py
+        acceptance:
+          - When the validator runs, the system shall exit 0 with a WARNING line.
+        prompt: medium-task-warning
+        estimate:
+          lines_estimate: 150
+          duration_hours: 2

@@ -1,0 +1,24 @@
+{
+  "heuristic_flags": [
+    "LOC-over-estimate",
+    "AC-coverage-over-expected"
+  ],
+  "task": {
+    "id": "deviation-heuristic-lib",
+    "prompt": "/start deviation-heuristic-lib",
+    "acceptance": [
+      "When compute_phase_ratios is called with a phase artifact summary, it returns 'aligned' on stdout (exit 0) when no ratio exceeds 1.5x its declared bound.",
+      "When any of the three ratios (modified-files-over-declared, LOC-over-estimate, AC-coverage-over-expected) exceeds 1.5x, compute_phase_ratios prints 'flagged' followed by the failing ratio names, one per line.",
+      "Where task.where.modify is empty in the upstream task, modified-files-over-declared shall be computed against task.where.create alone.",
+      "When tests/test_deviation_heuristic.sh runs, all four cases in tests/fixtures/deviation_heuristic/cases.json pass."
+    ]
+  },
+  "commit_ref": "abc1234",
+  "modified_files": [
+    "adapters/claude-code/claude/tools/lib/deviation-assess.sh",
+    "tests/test_deviation_heuristic.sh",
+    "tests/fixtures/deviation_heuristic/cases.json"
+  ],
+  "lines_added": 142,
+  "lines_removed": 0
+}

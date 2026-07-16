@@ -1,0 +1,13 @@
+# Test Project CLAUDE.md
+
+pipeline:
+  toolchain:
+    infra: [bash, shellcheck]
+
+  grinder:
+    languages: [bash]
+    findings:
+      shellcheck:
+        paths: [claude/tools/]
+      fix_rules_allowlist: []
+      never_touch_files: []

@@ -1,0 +1,7 @@
+[
+  {
+    "finding_id": "ruff:W291-bar.py-00000000",
+    "state": "Deferred",
+    "reason": "Not relevant"
+  }
+]

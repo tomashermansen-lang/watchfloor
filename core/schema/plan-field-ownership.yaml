@@ -1,0 +1,251 @@
+# Single source of truth for plan read/write authority per phase.
+#
+# Consumed by:
+#   - adapters/claude-code/claude/tools/task-view.py        (read scope per phase, Track 1)
+#   - adapters/claude-code/claude/hooks/plan-ownership-guard.sh (PreToolUse write enforcement, Track 2)
+#   - adapters/claude-code/claude/tools/validate-plan-diff.py   (pre-commit defense-in-depth, Track 3)
+#
+# Schema: docs/A_B_test_canary-models/PLAN_OWNERSHIP_PROPOSAL.md § Track 1+2
+#
+# Path syntax: a subset of JSONPath sufficient for plan-yaml inspection.
+# Supported expressions:
+#   $                                              the plan root
+#   $.foo                                          top-level field
+#   $.foo.bar                                      nested field
+#   $.foo.*                                        any direct child
+#   $.foo[*]                                       any array element
+#   $.foo[?(@.id==$CURRENT_TASK_ID)].bar           filter array by current task
+#   $.**                                           recursive wildcard (plan-project only)
+#
+# Substitutions:
+#   $CURRENT_TASK_ID — the value of AUTOPILOT_CURRENT_TASK_ID env at hook time
+
+# ─── READ AUTHORITY ─────────────────────────────────────────────────────────
+# What each phase's task-view slicer projects into stdout.
+# Mirrors the per-phase consumption table in plan-detection/SKILL.md R28.
+#
+# Each phase reads project-level orientation, parent-phase orientation,
+# its own task fields, and (per the table) selected artifact_refs of deps.
+# Sibling tasks NEVER appear in any phase's read scope.
+
+read_scope:
+
+  # ─── Whole-plan readers (legitimate exemption) ───
+  # These tools need the unified view by design.
+  plan-project:
+    description: "Plan author / updater needs full plan visibility."
+    paths:
+      - "$.**"
+
+  retro:
+    description: "Cross-phase retro observer needs every artifact_refs (R29 exempt)."
+    paths:
+      - "$.**"
+
+  done:
+    description: "Step 3.5 needs to read predecessor task contracts when populating codebase_snapshot."
+    paths:
+      - "$.**"
+
+  # ─── Per-phase consumption (mirrors SKILL.md R28 table) ───
+  ba:
+    project_fields: [vision, scope, success_criteria, kill_criteria]
+    phase_fields:   [overview_summary, sequencing_rationale, cross_cutting_constraints]
+    task_fields:    [id, name, task_type, status, what, why, where, acceptance, prompt, depends, constraints, estimate, manualtest_scenarios]
+    dep_artifact_refs: [requirements_path]
+
+  ux:
+    project_fields: [vision, success_criteria]
+    phase_fields:   [overview_summary, sequencing_rationale]
+    task_fields:    [id, name, task_type, status, what, why, acceptance, depends]
+    dep_artifact_refs: [requirements_path, plan_path]
+
+  plan:
+    project_fields: [vision, scope, design_notes, kill_criteria, risks]
+    phase_fields:   [overview_summary, sequencing_rationale, cross_cutting_constraints]
+    task_fields:    [id, name, task_type, status, what, why, where, acceptance, constraints, estimate, manualtest_scenarios, prompt, depends]
+    dep_artifact_refs: [requirements_path]
+
+  testplan:
+    project_fields: [vision, scope, success_criteria]
+    phase_fields:   [overview_summary, sequencing_rationale]
+    task_fields:    [id, name, task_type, status, what, why, where, acceptance, manualtest_scenarios, depends]
+    dep_artifact_refs: [requirements_path, plan_path]
+
+  review:
+    project_fields: [scope, kill_criteria, risks]
+    phase_fields:   [overview_summary, sequencing_rationale]
+    task_fields:    [id, name, task_type, status, what, why, where, acceptance, prompt, depends]
+    dep_artifact_refs: [plan_path, requirements_path]
+
+  team-review:
+    project_fields: [scope, kill_criteria, design_notes, risks]
+    phase_fields:   [overview_summary, sequencing_rationale, cross_cutting_constraints]
+    task_fields:    [id, name, task_type, status, what, why, where, acceptance, constraints, depends]
+    dep_artifact_refs: [plan_path, requirements_path]
+
+  implement:
+    project_fields: [scope, kill_criteria, design_notes]
+    phase_fields:   [overview_summary, sequencing_rationale, cross_cutting_constraints]
+    task_fields:    [id, name, task_type, status, what, why, where, acceptance, constraints, estimate, prompt, depends]
+    dep_artifact_refs: [plan_path, requirements_path, review_path, team_review_path]
+
+  static-analysis:
+    project_fields: [tech_stack, success_criteria]
+    phase_fields:   [sequencing_rationale]
+    task_fields:    [id, name, task_type, status, where, depends]
+    dep_artifact_refs: []
+
+  manualtest:
+    project_fields: [success_criteria]
+    phase_fields:   [overview_summary]
+    task_fields:    [id, name, task_type, status, where, manualtest_scenarios, manual_test, depends]
+    dep_artifact_refs: [plan_path, requirements_path]
+
+  qa:
+    project_fields: [success_criteria, kill_criteria]
+    phase_fields:   [sequencing_rationale]
+    task_fields:    [id, name, task_type, status, where, acceptance, manualtest_scenarios, depends]
+    dep_artifact_refs: [plan_path, requirements_path, static_analysis_path]
+
+  team-qa:
+    project_fields: [success_criteria, kill_criteria, risks]
+    phase_fields:   [sequencing_rationale, cross_cutting_constraints]
+    task_fields:    [id, name, task_type, status, where, acceptance, manualtest_scenarios, depends]
+    dep_artifact_refs: [plan_path, requirements_path, static_analysis_path]
+
+  commit:
+    project_fields: []
+    phase_fields:   [gate]
+    task_fields:    [id, name, status, where, depends]
+    dep_artifact_refs: []
+
+  hotfix:
+    project_fields: [kill_criteria]
+    phase_fields:   [overview_summary, sequencing_rationale]
+    task_fields:    [id, name, status, what, why, where, acceptance, prompt, depends]
+    dep_artifact_refs: [requirements_path, plan_path]
+
+  start:
+    project_fields: []
+    phase_fields:   [gate]
+    task_fields:    [id, name, status, depends]
+    dep_artifact_refs: []
+
+# ─── WRITE AUTHORITY ────────────────────────────────────────────────────────
+# What each phase may Edit/Write on the plan under autopilot.
+# Empty list = phase has zero plan-write authority under autopilot.
+# Interactive sessions (no AUTOPILOT_CURRENT_PHASE env var) are ALLOWED
+# regardless — the operator is in the loop and serves as the guardrail.
+
+write_allowlist:
+
+  start:
+    description: "Toggle status wip on the current task."
+    paths:
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].status"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].last_updated"
+
+  done:
+    description: "Lean-context contract write + status flip wip→done."
+    paths:
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].status"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].last_updated"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].codebase_snapshot"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].codebase_snapshot.*"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].predecessor_context"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].predecessor_context.*"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.*"
+
+  plan-project:
+    description: "Plan author has full authority on every field."
+    paths:
+      - "$.**"
+
+  # Per-phase artifact_refs writes — each phase may set its own artifact ref
+  ba:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.requirements_path"]
+  ux:
+    paths: []
+  plan:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.plan_path"]
+  testplan:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.testplan_path"]
+  review:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.review_path"]
+  team-review:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.team_review_path"]
+  implement:
+    paths: []
+  static-analysis:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.static_analysis_path"]
+  manualtest:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.manualtest_path"]
+  qa:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.qa_report_path"]
+  team-qa:
+    paths: ["$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].artifact_refs.team_qa_path"]
+  commit:
+    paths: []
+  hotfix:
+    paths: []
+  retro:
+    paths:
+      - "$.retro"
+      - "$.retro_findings"
+
+# ─── LEGITIMATE WRITERS via PLAN_WRITE_INTENT env var ──────────────────────
+# Helpers run by the autopilot orchestrator that legitimately mutate plan
+# fields. The orchestrator sets PLAN_WRITE_INTENT=<key> for the duration of
+# the helper subprocess; the PreToolUse hook (Track 2) checks that the
+# diff matches the intent's allowed path-shape.
+
+legitimate_writers:
+
+  phase_results:
+    tool: deviation-tracker.py
+    allowed_paths:
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].phase_results"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].phase_results[*]"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].deviations"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].deviations[*]"
+
+  finalize_phase_results:
+    tool: commit-finalize.sh
+    allowed_paths:
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].phase_results"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].status"
+      - "$.phases[*].tasks[?(@.id==$CURRENT_TASK_ID)].last_updated"
+
+  deferred_finding:
+    tool: ratchet-autolog.py | finalise-deferred.py
+    allowed_paths:
+      - "$.deferred"
+      - "$.deferred[*]"
+
+  retro_finding:
+    tool: plan-retro.py
+    allowed_paths:
+      - "$.retro"
+      - "$.retro_findings"
+      - "$.retro_findings[*]"
+
+  gate_state:
+    tool: autopilot-chain.sh
+    allowed_paths:
+      - "$.phases[*].gate.state"
+      - "$.phases[*].gate.last_checked"
+
+# ─── FROZEN-EVIDENCE WORM SET ──────────────────────────────────────────────
+# Once a task transitions to status=done, these field-paths are WORM (write-
+# once, read-many). Only /plan-project --update (which has $.** authority)
+# may rewrite them, and only with explicit operator invocation.
+# Enforced by Track 4 (plan_validators.py:detect_frozen_evidence_drift) AND
+# Track 2 hook (status-check before allowing /done to write).
+
+worm_when_done:
+  - "codebase_snapshot"
+  - "codebase_snapshot.*"
+  - "predecessor_context"
+  - "predecessor_context.*"

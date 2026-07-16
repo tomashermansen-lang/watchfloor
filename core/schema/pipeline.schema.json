@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pipeline.schema.json",
+  "title": "Pipeline Manifest",
+  "description": "Per-project pipeline configuration for the autopilot pipeline. Lives in <project>/pipeline.yaml. Migrated from CLAUDE.md `pipeline:` block 2026-04-29 — see dotfiles BACKLOG and migration commit for rationale (config belongs in config files, not embedded in markdown prose).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Tool prerequisites checked at autopilot preflight. Each category is an array of tool names; preflight verifies each is available.",
+      "properties": {
+        "python": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Python tools (e.g., ruff, mypy, pytest_cov). Verified via `command -v` or `python -c \"import <tool>\"`."
+        },
+        "node": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Node tools (e.g., eslint, tsc, vitest). Verified via `npx <tool> --version` from frontend directories."
+        },
+        "imports": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Python module imports that must succeed (used by tools beyond what's in `python`). Verified via `python -c \"import <module>\"`."
+        },
+        "infra": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Infrastructure tools (e.g., bash, jq, sonar-scanner). Verified via `command -v`. Missing tools warn but do not fail preflight."
+        }
+      }
+    },
+    "smoke_test": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Commands run after merge to main to verify the merge did not break the build. Each command exit-code-checked; non-zero fails the post-merge gate."
+    },
+    "integration_test": {
+      "description": "The project's integration *surface*, run UNSANDBOXED by the orchestrator integration gate (real integration gates §4.1). Two forms: (1) legacy flat array of command strings — the detection-half shape; (2) object form declaring commands + trigger globs + services. Each command is timeout-bounded. Gate mode is INTEGRATION_GATE_MODE=warn|deny (default warn).",
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Legacy flat form: integration commands only. Equivalent to the object form with no trigger and no services (gate is always eligible, brings up no services)."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commands"],
+          "properties": {
+            "commands": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "The integration commands the gate runs unsandboxed (e.g. 'bash dashboard/tests/run-all.sh --only-integration')."
+            },
+            "trigger": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Path globs (relative to project root) that gate the run (§5). The integration gate fires only if the phase's task diffs touch one of these — the project's declared infra surface. This is the GROUND TRUTH /plan-project reads to author each phase gate's trigger (§4.3); the §7 cross-validation test asserts the authored plan gate matches this by value. Absent ⇒ the gate is always eligible."
+            },
+            "oracle_globs": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Path globs for the integration test/oracle files (and their expected results). During the §4.4 remediation loop the plan-ownership guard WORM-locks these: the lead-developer fixer is structurally DENIED Edit/Write to any matching path (Guard #2, test-immutability). The fixer may add/modify UNIT tests elsewhere (TDD §6b) but never the oracle that judges the gate — a fixer that edits the test produces false green, worse than no gate. Absent ⇒ no WORM lock (the behavioural skill guard still applies)."
+            },
+            "services": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "description": "Service identifier (e.g. 'postgres-test-db')." },
+                  "start_cmd": { "type": "string", "minLength": 1, "description": "Command that brings the service up inside the ephemeral, isolated, credential-free execution env (§6a Guard #4). Optional." },
+                  "health_cmd": { "type": "string", "minLength": 1, "description": "Command that returns 0 once the service is ready (e.g. 'pg_isready -h localhost'). Optional." }
+                }
+              },
+              "description": "Services the integration suite needs (e.g. a Postgres test DB for OIH). Each is brought up in the ephemeral execution env, not on the host (§6a Guard #4) — this retro-justifies killing the hardcoded `docker compose up db-test` OIH-ism: OIH declares its DB here; dotfiles declares none. Absent ⇒ no services."
+            }
+          }
+        }
+      ]
+    },
+    "contracts": {
+      "type": "array",
+      "description": "Cross-cutting invariants the pipeline enforces (test files that must exist, grep patterns with max-value caps, etc.).",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["test"],
+            "properties": {
+              "test": { "type": "string", "minLength": 1 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["grep", "source", "max_value"],
+            "properties": {
+              "grep": { "type": "string", "minLength": 1 },
+              "source": { "type": "string", "minLength": 1 },
+              "max_value": { "type": ["string", "integer"] }
+            }
+          }
+        ]
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "description": "Declared preconditions checked at autopilot start (warn-level, not blocking). Surfaces tooling gaps upfront so a phase doesn't silently SKIP after 1-2h.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "value", "reason"],
+            "properties": {
+              "kind": { "const": "python_import" },
+              "value": { "type": "string", "minLength": 1, "description": "Python module name; preflight runs `python -c \"import <value>\"`." },
+              "reason": { "type": "string", "minLength": 10, "description": "Why this precondition matters; printed when check fails." }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "file", "dep", "reason"],
+            "properties": {
+              "kind": { "const": "package_dep" },
+              "file": { "type": "string", "minLength": 1, "description": "Path to package.json or similar (relative to project root)." },
+              "dep": { "type": "string", "minLength": 1, "description": "Dependency name to grep for (e.g., '@vitest/coverage-v8')." },
+              "reason": { "type": "string", "minLength": 10 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "path", "reason"],
+            "properties": {
+              "kind": { "const": "file_exists" },
+              "path": { "type": "string", "minLength": 1, "description": "Path that must exist (relative to project root)." },
+              "reason": { "type": "string", "minLength": 10 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "url", "reason"],
+            "properties": {
+              "kind": { "const": "http_reachable" },
+              "url": { "type": "string", "format": "uri", "minLength": 1, "description": "URL preflight curls; success = 2xx within 3s." },
+              "reason": { "type": "string", "minLength": 10 }
+            }
+          }
+        ]
+      }
+    },
+    "grinder": {
+      "type": "object",
+      "description": "Per-project configuration for the grinder background quality system. See backlog #2 (zero-tech-debt-pipeline). Optional — projects without grinder coverage skip this block.",
+      "additionalProperties": true,
+      "properties": {
+        "languages": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["python", "typescript", "bash", "javascript", "rust", "go"] }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "findings": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

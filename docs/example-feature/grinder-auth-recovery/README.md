@@ -17,6 +17,7 @@ Read in pipeline order:
 | qa | [QA_REPORT.md](QA_REPORT.md) | Verdict: **passed after a fix loop** — QA found gaps and added 13 test scenarios (54 → 67 tests) before approving |
 | static-analysis | [STATIC_ANALYSIS.md](STATIC_ANALYSIS.md) | SonarQube + lint gates, run **after** QA so they see the code that actually merges |
 | (run metadata) | [autopilot-summary.json](autopilot-summary.json) | Machine summary of the unattended run: per-phase durations and costs, 2h49m end to end |
+| (run record) | [autopilot-stream.ndjson](autopilot-stream.ndjson) | The full tool-level stream: 1,445 events — every tool call, result, phase transition, and cost event from the run. Too large for GitHub's inline viewer; use Raw or clone. |
 
 ## The phase-labeled commit sequence
 
@@ -40,6 +41,6 @@ ca7c2ba  2026-05-09  Merge branch 'feature/grinder-auth-recovery'
 - **The order is the current one.** Test plan lands before review; static analysis runs after QA. Both reorderings exist because earlier runs revealed leaks, and this trail shows the corrected sequence in practice.
 - **QA was not a rubber stamp.** The run passed only after a fix loop in which the QA phase added 13 test scenarios the implementation phase had not written.
 - **The whole run was unattended.** Every checkpoint was auto-approved (that is all autopilot changes); the gates did the gatekeeping. The summary file records what each phase cost and how long it took.
-- **What is not here:** the full tool-level stream log (`autopilot-stream.ndjson`, ~5.7 MB of every tool call and result) exists for this run but is not published for size reasons. The artifacts above are the human-readable layer of the same trail.
+- **The raw stream is included.** `autopilot-stream.ndjson` is the tool-level record of the entire run — 1,445 events covering every tool call, every result, and every phase transition, with paths sanitized. The markdown artifacts above are the human-readable layer of the same trail; the stream is the layer below it.
 
 The implementation this trail describes ships in this repo: see `adapters/claude-code/claude/tools/grinder.sh` (auth preflight) and its tests under `tests/`.

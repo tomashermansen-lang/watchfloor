@@ -1,0 +1,11 @@
+{
+  "task": "session-status-endpoint",
+  "project": "dotfiles",
+  "branch": "feature/session-status-endpoint",
+  "workdir": "~/Projekter/dotfiles-session-status-endpoint",
+  "start_ts": "2026-05-14T18:48:44Z",
+  "end_ts": "2026-05-14T20:16:12Z",
+  "duration_s": 5247,
+  "phases": [{"name":"Business Analysis","status":"completed","duration_s":348,"cost":2.2411132499999997,"artifact":"REQUIREMENTS.md"},{"name":"Architecture Plan","status":"completed","duration_s":325,"cost":1.510698,"artifact":"PLAN.md"},{"name":"Test Plan","status":"completed","duration_s":273,"cost":1.52581025,"artifact":"TESTPLAN.md"},{"name":"Review","status":"completed","duration_s":668,"cost":4.466655499999999,"artifact":"REVIEW.md"},{"name":"Implement","status":"completed","duration_s":1091,"cost":9.737827249999997,"artifact":null},{"name":"QA","status":"completed","duration_s":1518,"cost":7.3410056,"artifact":"QA_REPORT.md"},{"name":"Static Analysis","status":"completed","duration_s":597,"cost":3.3229605,"artifact":"STATIC_ANALYSIS.md"},{"name":"Commit","status":"completed","duration_s":362,"cost":0.4286735,"artifact":null},{"name":"Finalize","status":"completed","duration_s":0,"cost":0,"artifact":null}],
+  "status": "success"
+}

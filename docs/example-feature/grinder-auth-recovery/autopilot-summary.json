@@ -1,0 +1,11 @@
+{
+  "task": "grinder-auth-recovery",
+  "project": "dotfiles",
+  "branch": "feature/grinder-auth-recovery",
+  "workdir": "~/Projekter/dotfiles-grinder-auth-recovery",
+  "start_ts": "2026-05-09T15:33:17Z",
+  "end_ts": "2026-05-09T18:22:36Z",
+  "duration_s": 10158,
+  "phases": [{"name":"Business Analysis","status":"completed","duration_s":264,"cost":1.2611372499999998,"artifact":"REQUIREMENTS.md"},{"name":"Architecture Plan","status":"completed","duration_s":453,"cost":2.1075939999999997,"artifact":"PLAN.md"},{"name":"Test Plan","status":"completed","duration_s":381,"cost":1.99741725,"artifact":"TESTPLAN.md"},{"name":"Review","status":"completed","duration_s":391,"cost":2.1391445000000004,"artifact":"REVIEW.md"},{"name":"Implement","status":"completed","duration_s":5417,"cost":15.971785250000002,"artifact":null},{"name":"QA","status":"completed","duration_s":1443,"cost":8.907794899999995,"artifact":"QA_REPORT.md"},{"name":"Static Analysis","status":"completed","duration_s":1426,"cost":6.876568000000001,"artifact":"STATIC_ANALYSIS.md"},{"name":"Commit","status":"completed","duration_s":45,"cost":0.29019,"artifact":null},{"name":"Finalize","status":"completed","duration_s":0,"cost":0,"artifact":null}],
+  "status": "blocked"
+}

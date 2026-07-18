@@ -1,4 +1,4 @@
-# Claude Agent Dashboard
+# Watchfloor Dashboard
 
 Real-time monitoring dashboard for autonomous Claude Code pipelines. Provides visibility into autopilot sessions, execution plan progress, streaming logs, phase artifacts, and session metrics across parallel AI workloads.
 

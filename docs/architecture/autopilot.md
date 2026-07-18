@@ -112,7 +112,7 @@ menneskelige checkpoints.
 │    └─ {"type":"finalize","result":{...}}  (merge outcome)           │
 │                ▲                                                    │
 │                │ tailer                                             │
-│  DASHBOARD ────┘  claude-agent-dashboard (port 8787)                │
+│  DASHBOARD ────┘  watchfloor dashboard   (port 8787)                │
 │                                                                     │
 │  SUMMARY_FILE: autopilot-summary.json                               │
 │    { task, project, branch, workdir, start_ts, end_ts,              │

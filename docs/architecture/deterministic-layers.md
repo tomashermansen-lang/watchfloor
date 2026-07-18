@@ -36,7 +36,7 @@ Alt det nedenstående kører uden at bruge tokens og uden model-skøn.
 │   PostToolUse:Bash ─► log-bash.sh (async)  ──► audit trail                   │
 │   PermissionReq.  ─► log-permissions.sh    ──► audit trail                   │
 │   Stop/TaskComp.  ─► verify_before_done.sh ──► projekt-specifik gate         │
-│   *                 report-status.sh (async) ► claude-agent-dashboard         │
+│   *                 report-status.sh (async) ► watchfloor dashboard           │
 └───────────────────────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────────────────────┐

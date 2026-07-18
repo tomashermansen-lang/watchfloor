@@ -1,6 +1,6 @@
 # Security Model
 
-The Claude Code Pipeline enforces a three-layer security model that constrains what the AI agent can access and modify.
+Watchfloor enforces a three-layer security model that constrains what the AI agent can access and modify.
 
 ## Layer 1: Sandbox (kernel)
 

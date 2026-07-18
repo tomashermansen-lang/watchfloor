@@ -101,7 +101,19 @@ bash tests/run-all.sh
 
 ## Screenshots
 
-_Screenshots coming soon._
+Captures from real autopilot sessions -- more context in the [portfolio write-up](https://tomashermansen-lang.github.io/portfolio/projects/watchfloor-observability.html).
+
+![The dashboard shell with the plan viewer in its LIVE state](https://tomashermansen-lang.github.io/portfolio/screenshots/dashboard-dark.png)
+
+![The plan viewer: a strip of phases with per-phase progress, one phase expanded into a dependency graph of tasks, and a gate node with all three checks passed](https://tomashermansen-lang.github.io/portfolio/screenshots/execution-graph-dashboard.png)
+
+![Task drill-down for a completed autopilot run: phase timeline with per-phase durations, turns, and cost, the artifact chain from requirements to QA report, and the narrative log](https://tomashermansen-lang.github.io/portfolio/screenshots/dashboard-autopilot.png)
+
+![Session metrics: a KPI strip with sessions, tool calls, error rate, permission friction, and spend per hour, a per-branch activity timeline, tool usage bars, and error tracking](https://tomashermansen-lang.github.io/portfolio/screenshots/dashboard-metrics.png)
+
+![Run-economy metrics: totals for tokens, cost, run time, and turns, plus by-phase and by-feature cost tables](https://tomashermansen-lang.github.io/portfolio/screenshots/watchfloor-cost.png)
+
+The session-metrics view is also captured [live on video](https://tomashermansen-lang.github.io/portfolio/screenshots/dashboard-metrics.mp4).
 
 ## API Endpoints
 

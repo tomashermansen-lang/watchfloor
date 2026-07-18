@@ -113,7 +113,7 @@ if [ "$MISSING" -gt 0 ]; then
   echo ""
   echo "NOTE: CLI pipeline not detected ($MISSING items missing)."
   echo "  The dashboard works without it, but for full autopilot monitoring"
-  echo "  install the pipeline: https://github.com/tomashermansen-lang/claude-code-pipeline"
+  echo "  install the pipeline: https://github.com/tomashermansen-lang/watchfloor"
 fi
 
 echo ""

@@ -59,8 +59,8 @@ The frontend polls the API endpoints and renders with React 19, MUI v7, and Rech
 ## Setup
 
 ```bash
-git clone https://github.com/tomashermansen-lang/claude-agent-dashboard.git
-cd claude-agent-dashboard
+git clone https://github.com/tomashermansen-lang/watchfloor.git
+cd watchfloor/dashboard
 
 # Register the session hook in ~/.claude/settings.json
 ./install.sh
@@ -144,7 +144,7 @@ All endpoints return JSON. The server binds to `127.0.0.1` only.
 ## Project Structure
 
 ```
-claude-agent-dashboard/
+dashboard/
   serve.py                   Python HTTP server + route registry
   server/
     plan_helpers.py           plan loading, discovery, status merge
@@ -185,9 +185,9 @@ claude-agent-dashboard/
 
 ## Related Projects
 
-This dashboard is the observability layer for the **Claude CLI Pipeline** -- a three-tier execution system (planning, development, autonomy) that runs Claude Code sessions autonomously in tmux.
+This dashboard is the observability layer for the **Watchfloor pipeline** -- a three-tier execution system (planning, development, autonomy) that runs Claude Code sessions autonomously in tmux.
 
-- **Pipeline source**: [github.com/tomashermansen-lang/dotfiles](https://github.com/tomashermansen-lang/dotfiles)
+- **Pipeline source**: this repo -- see the [root README](../README.md)
 - **Portfolio**: [tomashermansen-lang.github.io/portfolio](https://tomashermansen-lang.github.io/portfolio)
 
 The pipeline runs unattended. This dashboard provides the visibility: which sessions are active, what phase they are in, whether gates have passed, and where failures occur. It is decoupled from any monitored project -- context is discovered dynamically from git worktrees and hook events.

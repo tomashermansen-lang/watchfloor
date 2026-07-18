@@ -22,7 +22,7 @@ adapters/claude-code/   The Claude Code adapter: commands, agents, skills,
 core/schema/            11 JSON Schemas: execution plan 2.0, pipeline
                         manifest, deviation taxonomy, grinder state, events.
 dashboard/              The watch floor UI. React 19 + MUI v7 + Recharts
-                        frontend, FastAPI backend, WebSocket terminal bridge,
+                        frontend, FastAPI backend, read-only terminal view,
                         autopilot control endpoints.
 docs/architecture/      Architecture notes: autopilot, chain, grinder,
                         deterministic layers, execution-graph context,
@@ -68,7 +68,7 @@ An opt-in harness can also route selected phases through a local Ollama daemon; 
 
 ## Supervision (the watch floor)
 
-The dashboard discovers running autopilot sessions, streams their tool calls and phase transitions live, renders execution plans as dependency graphs with gate evaluation, shows per-session metrics, and exposes controls: pause/resume autopilot, and a WebSocket terminal bridge into the tmux session. Deviation tracking flags tasks whose implementation drifts from the plan (file, size, and acceptance-criteria ratios) and hands flagged cases to an assessor agent for classification.
+The dashboard discovers running autopilot sessions, streams their tool calls and phase transitions live, renders execution plans as dependency graphs with gate evaluation, shows per-session metrics, and exposes controls: pause/resume autopilot, and a read-only WebSocket terminal view of the live tmux session. Deviation tracking flags tasks whose implementation drifts from the plan (file, size, and acceptance-criteria ratios) and hands flagged cases to an assessor agent for classification.
 
 See [dashboard/README.md](dashboard/README.md) for setup and the full feature list.
 
